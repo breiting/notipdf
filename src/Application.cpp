@@ -1,12 +1,13 @@
 #include "app/Application.hpp"
 
-#include <imgui.h>
+#ifndef GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_NONE
+#endif
+#include <GLFW/glfw3.h>
 
 namespace no::app {
 
-bool Application::Initialize(const std::string& pdf_path) {
-    input_path_ = pdf_path;
-
+bool Application::Initialize(const std::string& pdf_path, int viewport_width, int viewport_height) {
     if (!document_.Open(pdf_path)) {
         return false;
     }
@@ -15,45 +16,85 @@ bool Application::Initialize(const std::string& pdf_path) {
         return false;
     }
 
-    loaded_ = LoadFirstPage();
-    return loaded_;
+    if (!viewer_renderer_.Initialize()) {
+        return false;
+    }
+
+    if (!page_quad_.Initialize()) {
+        return false;
+    }
+
+    SetViewportSize(viewport_width, viewport_height);
+
+    if (!LoadPage(0)) {
+        return false;
+    }
+
+    initialized_ = true;
+    return true;
 }
 
 void Application::Shutdown() {
     document_.Close();
-    loaded_ = false;
+    initialized_ = false;
 }
 
-void Application::Update(double /*dt*/) {
+void Application::Update(float dt) {
+    if (!initialized_) {
+        return;
+    }
+
+    camera_.Update(dt);
 }
 
-void Application::DrawUI() {
-    ImGui::Begin("Document");
-    ImGui::Text("File: %s", input_path_.c_str());
-    ImGui::Text("Pages: %d", document_.GetPageCount());
-    ImGui::Text("Loaded: %s", loaded_ ? "true" : "false");
-    ImGui::Text("Rendered size: %d x %d", rendered_page_.width, rendered_page_.height);
-    ImGui::Text("Pixels: %zu", rendered_page_.pixels_rgba.size());
-    ImGui::End();
+void Application::Render() {
+    viewer_renderer_.BeginFrame();
 
-    if (loaded_) {
-        viewer_panel_.Draw(rendered_page_);
-    } else {
-        ImGui::Begin("PDF");
-        ImGui::TextUnformatted("No PDF loaded.");
-        ImGui::End();
+    if (!initialized_) {
+        return;
+    }
+
+    viewer_renderer_.Draw(camera_, page_quad_, page_texture_);
+}
+
+void Application::SetViewportSize(int width, int height) {
+    viewer_renderer_.SetViewportSize(width, height);
+    camera_.SetViewportSize(width, height);
+}
+
+void Application::OnMouseButton(int button, int action, int /*mods*/, double mouse_x, double mouse_y) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            camera_.BeginPan(mouse_x, mouse_y);
+        } else if (action == GLFW_RELEASE) {
+            camera_.EndPan();
+        }
     }
 }
 
-bool Application::LoadFirstPage() {
-    if (!renderer_.RenderPage(document_, 0, 2.0f, rendered_page_)) {
+void Application::OnMouseMove(double mouse_x, double mouse_y) {
+    camera_.PanTo(mouse_x, mouse_y);
+}
+
+void Application::OnScroll(double /*xoffset*/, double yoffset, double mouse_x, double mouse_y) {
+    camera_.ZoomAt(yoffset, mouse_x, mouse_y);
+}
+
+bool Application::LoadPage(int page_index) {
+    if (!pdf_renderer_.RenderPage(document_, page_index, 2.0f, rendered_page_)) {
         return false;
     }
 
-    if (!viewer_panel_.EnsureTexture(rendered_page_)) {
+    if (!page_texture_.UploadRGBA(rendered_page_.width, rendered_page_.height, rendered_page_.pixels_rgba.data())) {
         return false;
     }
 
+    const float aspect = static_cast<float>(rendered_page_.width) / static_cast<float>(rendered_page_.height);
+
+    page_quad_.SetSize(aspect, 1.0f);
+    camera_.FitToContent(page_quad_.GetWidth(), page_quad_.GetHeight());
+
+    current_page_index_ = page_index;
     return true;
 }
 

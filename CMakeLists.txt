@@ -138,13 +138,17 @@ target_link_libraries(mupdf_external INTERFACE ${MUPDF_LIBRARY} ${MUPDF_THIRD_LI
 # App
 # ----------------------------------------------------------
 add_executable(notipdf
-    src/main.cpp
-    src/Logger.cpp
     src/Application.cpp
+    src/Camera2D.cpp
+    src/Logger.cpp
     src/PdfDocument.cpp
+    src/PdfQuad.cpp
     src/PdfRenderer.cpp
+    src/PdfTexture.cpp
+    src/PdfViewerRenderer.cpp
     src/ViewerPanel.cpp
     src/Window.cpp
+    src/main.cpp
 	${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
 	${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
     ${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
@@ -162,6 +166,7 @@ target_link_libraries(notipdf
         CLI11::CLI11
         glfw
         glad
+        glm::glm
         imgui
         nlohmann_json::nlohmann_json
         mupdf_external

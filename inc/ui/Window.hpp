@@ -19,10 +19,10 @@ class Window {
      * \brief Configuration structure for creating a new window.
      */
     struct CreateInfo {
-        int width = 1280;                ///< Initial width of the window.
-        int height = 720;                ///< Initial height of the window.
-        std::string title = "OntoFlow";  ///< Title displayed in the window's title bar.
-        int msaa = 4;                    ///< Multi-sample anti-aliasing level.
+        int width = 1280;               ///< Initial width of the window.
+        int height = 720;               ///< Initial height of the window.
+        std::string title = "NotiPDF";  ///< Title displayed in the window's title bar.
+        int msaa = 4;                   ///< Multi-sample anti-aliasing level.
     };
 
     /**
