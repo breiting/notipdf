@@ -12,12 +12,14 @@ namespace no::render {
 class ViewerMapping {
    public:
     /**
-     * \brief Sets the displayed page size in pixels.
+     * \brief Sets the PDF page bounds in page coordinate space.
      *
-     * \param page_width The rendered page width in pixels.
-     * \param page_height The rendered page height in pixels.
+     * \param x0 Left page bound.
+     * \param y0 Top page bound.
+     * \param x1 Right page bound.
+     * \param y1 Bottom page bound.
      */
-    void SetPageSize(int page_width, int page_height);
+    void SetPageBounds(float x0, float y0, float x1, float y1);
 
     /**
      * \brief Sets the quad size in world units.
@@ -66,8 +68,10 @@ class ViewerMapping {
     void SelectionToWorldRect(const pdf::PdfSelection& selection, glm::vec2& out_min, glm::vec2& out_max) const;
 
    private:
-    int m_PageWidth = 1;
-    int m_PageHeight = 1;
+    float m_PageX0 = 0.0f;
+    float m_PageY0 = 0.0f;
+    float m_PageX1 = 1.0f;
+    float m_PageY1 = 1.0f;
     float m_QuadWidth = 1.0f;
     float m_QuadHeight = 1.0f;
 };

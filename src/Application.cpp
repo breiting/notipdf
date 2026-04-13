@@ -278,15 +278,21 @@ bool Application::LoadPage(int page_index) {
     m_PageQuad.SetSize(aspect, 1.0f);
     FitCurrentPageToView();
 
-    m_ViewerMapping.SetPageSize(m_RenderedPage.width, m_RenderedPage.height);
+    float page_x0 = 0.0f;
+    float page_y0 = 0.0f;
+    float page_x1 = 0.0f;
+    float page_y1 = 0.0f;
+    if (!m_Document.GetPageBounds(page_index, page_x0, page_y0, page_x1, page_y1)) {
+        return false;
+    }
+
+    m_ViewerMapping.SetPageBounds(page_x0, page_y0, page_x1, page_y1);
     m_ViewerMapping.SetQuadSize(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
 
     m_CurrentPageIndex = page_index;
     m_Selections.clear();
     m_IsSelecting = false;
 
-    m_CurrentPageIndex = page_index;
     return true;
 }
-
 }  // namespace no::app

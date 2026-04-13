@@ -4,9 +4,11 @@
 
 namespace no::render {
 
-void ViewerMapping::SetPageSize(int page_width, int page_height) {
-    m_PageWidth = std::max(1, page_width);
-    m_PageHeight = std::max(1, page_height);
+void ViewerMapping::SetPageBounds(float x0, float y0, float x1, float y1) {
+    m_PageX0 = x0;
+    m_PageY0 = y0;
+    m_PageX1 = x1;
+    m_PageY1 = y1;
 }
 
 void ViewerMapping::SetQuadSize(float quad_width, float quad_height) {
@@ -52,12 +54,15 @@ pdf::PdfSelection ViewerMapping::MakeSelectionFromWorldDrag(int page_index, cons
     const float v0 = 1.0f - v1_bottom;
     const float v1 = 1.0f - v0_bottom;
 
+    const float page_w = m_PageX1 - m_PageX0;
+    const float page_h = m_PageY1 - m_PageY0;
+
     pdf::PdfSelection selection;
     selection.PageIndex = page_index;
-    selection.X = u0 * static_cast<float>(m_PageWidth);
-    selection.Y = v0 * static_cast<float>(m_PageHeight);
-    selection.Width = (u1 - u0) * static_cast<float>(m_PageWidth);
-    selection.Height = (v1 - v0) * static_cast<float>(m_PageHeight);
+    selection.X = m_PageX0 + u0 * page_w;
+    selection.Y = m_PageY0 + v0 * page_h;
+    selection.Width = (u1 - u0) * page_w;
+    selection.Height = (v1 - v0) * page_h;
     return selection;
 }
 
@@ -66,11 +71,14 @@ void ViewerMapping::SelectionToWorldRect(const pdf::PdfSelection& selection, glm
     const float half_w = m_QuadWidth * 0.5f;
     const float half_h = m_QuadHeight * 0.5f;
 
-    const float u0 = selection.X / static_cast<float>(m_PageWidth);
-    const float u1 = (selection.X + selection.Width) / static_cast<float>(m_PageWidth);
+    const float page_w = m_PageX1 - m_PageX0;
+    const float page_h = m_PageY1 - m_PageY0;
 
-    const float v0 = selection.Y / static_cast<float>(m_PageHeight);
-    const float v1 = (selection.Y + selection.Height) / static_cast<float>(m_PageHeight);
+    const float u0 = (selection.X - m_PageX0) / page_w;
+    const float u1 = (selection.X + selection.Width - m_PageX0) / page_w;
+
+    const float v0 = (selection.Y - m_PageY0) / page_h;
+    const float v1 = (selection.Y + selection.Height - m_PageY0) / page_h;
 
     const float x0 = u0 * m_QuadWidth - half_w;
     const float x1 = u1 * m_QuadWidth - half_w;

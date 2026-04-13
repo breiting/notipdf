@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 
 #include "pdf/PdfDocument.hpp"
 
@@ -27,7 +28,7 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
 
     out_image.Width = target_w;
     out_image.Height = target_h;
-    out_image.Pixels.resize(target_w * target_h, 255);  // white background
+    out_image.Pixels.resize(target_w * target_h, 255);
 
     fz_context* ctx = document.GetContext();
     fz_document* doc = document.GetHandle();
@@ -39,27 +40,14 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
     fz_try(ctx) {
         page = fz_load_page(ctx, doc, selection.PageIndex);
 
-        const fz_rect bounds = fz_bound_page(ctx, page);
-
-        const float page_w = bounds.x1 - bounds.x0;
-        const float page_h = bounds.y1 - bounds.y0;
-
-        // Selection normalized
-        const float sx0 = selection.X / page_w;
-        const float sy0 = selection.Y / page_h;
-        const float sx1 = (selection.X + selection.Width) / page_w;
-        const float sy1 = (selection.Y + selection.Height) / page_h;
-
-        // Absolute selection in page coords
-        const float sel_x0 = bounds.x0 + sx0 * page_w;
-        const float sel_y0 = bounds.y0 + sy0 * page_h;
-        const float sel_x1 = bounds.x0 + sx1 * page_w;
-        const float sel_y1 = bounds.y0 + sy1 * page_h;
+        const float sel_x0 = selection.X;
+        const float sel_y0 = selection.Y;
+        const float sel_x1 = selection.X + selection.Width;
+        const float sel_y1 = selection.Y + selection.Height;
 
         const float sel_w = sel_x1 - sel_x0;
         const float sel_h = sel_y1 - sel_y0;
 
-        // scale to fit into target while preserving aspect
         const float scale_x = static_cast<float>(target_w) / sel_w;
         const float scale_y = static_cast<float>(target_h) / sel_h;
         const float scale = std::min(scale_x, scale_y);
@@ -67,22 +55,25 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
         const float render_w = sel_w * scale;
         const float render_h = sel_h * scale;
 
-        const float offset_x = (target_w - render_w) * 0.5f;
-        const float offset_y = (target_h - render_h) * 0.5f;
+        const float offset_x = (static_cast<float>(target_w) - render_w) * 0.5f;
+        const float offset_y = (static_cast<float>(target_h) - render_h) * 0.5f;
 
-        fz_matrix m = fz_scale(scale, scale);
+        fz_matrix m;
+        m.a = scale;
+        m.b = 0.0f;
+        m.c = 0.0f;
+        m.d = scale;
+        m.e = offset_x - sel_x0 * scale;
+        m.f = offset_y - sel_y0 * scale;
 
-        // translate so selection top-left maps to (offset_x, offset_y)
-        m = fz_pre_translate(m, -sel_x0, -sel_y0);
-        m = fz_pre_translate(m, offset_x, offset_y);
-
-        fz_irect bbox = fz_make_irect(0, 0, target_w, target_h);
+        const fz_irect bbox = fz_make_irect(0, 0, target_w, target_h);
 
         pix = fz_new_pixmap_with_bbox(ctx, fz_device_gray(ctx), bbox, nullptr, 1);
         fz_clear_pixmap_with_value(ctx, pix, 255);
 
         dev = fz_new_draw_device(ctx, m, pix);
         fz_run_page(ctx, page, dev, fz_identity, nullptr);
+        fz_close_device(ctx, dev);
 
         unsigned char* src = fz_pixmap_samples(ctx, pix);
         const int stride = fz_pixmap_stride(ctx, pix);
@@ -90,11 +81,23 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
         for (int y = 0; y < target_h; ++y) {
             std::memcpy(&out_image.Pixels[y * target_w], src + y * stride, target_w);
         }
+
+        std::cout << "Selection page=" << selection.PageIndex << " x=" << selection.X << " y=" << selection.Y
+                  << " w=" << selection.Width << " h=" << selection.Height << " | target=" << target_w << "x"
+                  << target_h << " | scale=" << scale << " | offset=(" << offset_x << "," << offset_y << ")"
+                  << " | matrix=(" << m.a << "," << m.b << "," << m.c << "," << m.d << "," << m.e << "," << m.f
+                  << ")\n";
     }
     fz_always(ctx) {
-        if (dev) fz_drop_device(ctx, dev);
-        if (pix) fz_drop_pixmap(ctx, pix);
-        if (page) fz_drop_page(ctx, page);
+        if (dev != nullptr) {
+            fz_drop_device(ctx, dev);
+        }
+        if (pix != nullptr) {
+            fz_drop_pixmap(ctx, pix);
+        }
+        if (page != nullptr) {
+            fz_drop_page(ctx, page);
+        }
     }
     fz_catch(ctx) {
         return false;

@@ -97,4 +97,32 @@ fz_document* PdfDocument::GetHandle() const {
     return m_Document;
 }
 
+bool PdfDocument::GetPageBounds(int page_index, float& out_x0, float& out_y0, float& out_x1, float& out_y1) const {
+    if (!IsOpen()) {
+        return false;
+    }
+
+    fz_page* page = nullptr;
+
+    fz_try(m_Context) {
+        page = fz_load_page(m_Context, m_Document, page_index);
+        const fz_rect bounds = fz_bound_page(m_Context, page);
+
+        out_x0 = bounds.x0;
+        out_y0 = bounds.y0;
+        out_x1 = bounds.x1;
+        out_y1 = bounds.y1;
+    }
+    fz_always(m_Context) {
+        if (page != nullptr) {
+            fz_drop_page(m_Context, page);
+        }
+    }
+    fz_catch(m_Context) {
+        return false;
+    }
+
+    return true;
+}
+
 }  // namespace no::pdf
