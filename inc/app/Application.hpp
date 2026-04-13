@@ -3,7 +3,6 @@
 #include <string>
 
 #include "app/ViewerMode.hpp"
-#include "core/ProcessRunner.hpp"
 #include "pdf/PdfDocument.hpp"
 #include "pdf/PdfExporter.hpp"
 #include "pdf/PdfRenderer.hpp"
@@ -23,11 +22,6 @@ namespace no::app {
 class Application {
    public:
    public:
-    /**
-     * \brief Constructs the application.
-     */
-    Application();
-
     /**
      * \brief Initializes the application and loads the input PDF.
      *
@@ -155,7 +149,6 @@ class Application {
     glm::vec2 m_SelectionStartWorld = glm::vec2(0.0f);
     glm::vec2 m_SelectionCurrentWorld = glm::vec2(0.0f);
 
-    no::core::ProcessRunner m_ProcessRunner;
     no::pdf::PdfExporter m_PdfExporter;
 };
 

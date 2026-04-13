@@ -141,6 +141,8 @@ add_executable(notipdf
     src/Application.cpp
     src/Camera2D.cpp
     src/LineRenderer.cpp
+    src/PdfImageWriter.cpp
+    src/PdfSelectionRenderer.cpp
     src/Logger.cpp
     src/PdfDocument.cpp
     src/PdfExporter.cpp

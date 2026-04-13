@@ -12,9 +12,6 @@
 
 namespace no::app {
 
-Application::Application() : m_PdfExporter(m_ProcessRunner) {
-}
-
 bool Application::Initialize(const std::string& pdf_path, int viewport_width, int viewport_height) {
     if (!m_Document.Open(pdf_path)) {
         return false;
@@ -126,30 +123,16 @@ void Application::UndoLastSelection() {
 }
 
 void Application::ExportLastSelection() {
-    if (m_Selections.empty()) {
-        return;
-    }
+    if (m_Selections.empty()) return;
 
-    const pdf::PdfSelection& selection = m_Selections.back();
+    const auto& selection = m_Selections.back();
 
-    const std::filesystem::path output_path =
-        std::filesystem::current_path() / ("export_page_" + std::to_string(selection.PageIndex + 1) + ".pdf");
+    const std::filesystem::path output = std::filesystem::current_path() / "export.pdf";
 
-    pdf::ExportRequest request;
-    request.InputPdfPath = m_Document.GetPath();
-    request.OutputPdfPath = output_path;
-    request.Selection = selection;
-    request.RenderedPageWidth = m_RenderedPage.width;
-    request.RenderedPageHeight = m_RenderedPage.height;
-    request.OptimizeForEInk = false;
+    no::pdf::PdfExporter exporter;
 
-    const pdf::ExportResult result = m_PdfExporter.ExportSelection(m_Document, request);
-    if (!result.Success) {
-        std::cerr << "Export failed: " << result.Message << '\n';
-        return;
-    }
-
-    std::cout << "Exported PDF to: " << output_path << '\n';
+    exporter.Export(m_Document, selection, output, no::pdf::ExportPreset::InkPad4Landscape);
+    std::cout << "Exported PDF to: " << output << '\n';
 }
 
 void Application::Update(float dt) {
