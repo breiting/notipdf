@@ -95,6 +95,10 @@ void Application::OnKey(int key, int action, int /*mods*/) {
 
         case GLFW_KEY_DELETE:
         case GLFW_KEY_BACKSPACE:
+            ClearSelections();
+            break;
+
+        case GLFW_KEY_Z:
             UndoLastSelection();
             break;
 
@@ -263,6 +267,8 @@ bool Application::ConfirmExport() {
     std::cout << "Exported PDF: " << output_pdf << '\n';
     std::cout << "Exported metadata: " << output_json << '\n';
 
+    ClearSelections();
+
     return true;
 }
 
@@ -340,6 +346,11 @@ void Application::UndoLastSelection() {
     if (!m_Selections.empty()) {
         m_Selections.pop_back();
     }
+}
+
+void Application::ClearSelections() {
+    m_Selections.clear();
+    m_IsSelecting = false;
 }
 
 void Application::Update(float dt) {

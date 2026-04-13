@@ -150,6 +150,7 @@ class Application {
     void OpenExportDialog();
     void DrawExportDialog();
     bool ConfirmExport();
+    void ClearSelections();
     image::ImageOptimizationSettings BuildImageOptimizationSettings() const;
 
     static std::string SanitizeFileName(const std::string& value);
