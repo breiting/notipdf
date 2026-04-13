@@ -67,6 +67,11 @@ class ViewerMapping {
      */
     void SelectionToWorldRect(const pdf::PdfSelection& selection, glm::vec2& out_min, glm::vec2& out_max) const;
 
+    float GetPageX0() const;
+    float GetPageY0() const;
+    float GetPageX1() const;
+    float GetPageY1() const;
+
    private:
     float m_PageX0 = 0.0f;
     float m_PageY0 = 0.0f;

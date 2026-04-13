@@ -90,4 +90,20 @@ void ViewerMapping::SelectionToWorldRect(const pdf::PdfSelection& selection, glm
     out_max = glm::vec2(std::max(x0, x1), std::max(y_top0, y_top1));
 }
 
+float ViewerMapping::GetPageX0() const {
+    return m_PageX0;
+}
+
+float ViewerMapping::GetPageY0() const {
+    return m_PageY0;
+}
+
+float ViewerMapping::GetPageX1() const {
+    return m_PageX1;
+}
+
+float ViewerMapping::GetPageY1() const {
+    return m_PageY1;
+}
+
 }  // namespace no::render

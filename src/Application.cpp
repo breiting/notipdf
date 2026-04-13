@@ -107,10 +107,6 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             ClearSelections();
             break;
 
-        case GLFW_KEY_Z:
-            UndoLastSelection();
-            break;
-
         case GLFW_KEY_E:
             OpenExportDialog();
             break;
@@ -133,7 +129,7 @@ void Application::DrawGui() {
 }
 
 void Application::OpenExportDialog() {
-    if (m_Selections.empty()) {
+    if (!m_Selection.has_value()) {
         return;
     }
 
@@ -236,11 +232,11 @@ void Application::DrawExportDialog() {
 }
 
 bool Application::ConfirmExport() {
-    if (m_Selections.empty()) {
+    if (!m_Selection.has_value()) {
         return false;
     }
 
-    const pdf::PdfSelection& selection = m_Selections.back();
+    const pdf::PdfSelection& selection = *m_Selection;
 
     const std::string title_slug = SanitizeFileName(m_ExportDialogState.Title);
     const std::string voice_slug = SanitizeFileName(GetVoiceName(m_ExportDialogState.VoiceIndex));
@@ -359,15 +355,10 @@ void Application::FitCurrentPageToView() {
     m_Camera.FitToContent(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
 }
 
-void Application::UndoLastSelection() {
-    if (!m_Selections.empty()) {
-        m_Selections.pop_back();
-    }
-}
-
 void Application::ClearSelections() {
-    m_Selections.clear();
+    m_Selection.reset();
     m_IsSelecting = false;
+    m_IsMovingSelection = false;
 }
 
 void Application::Update(float dt) {
@@ -393,10 +384,10 @@ void Application::DrawSelectionOverlays() const {
     const glm::vec4 persistent_color(0.95f, 0.25f, 0.2f, 1.0f);
     const glm::vec4 preview_color(0.2f, 0.9f, 0.3f, 1.0f);
 
-    for (const pdf::PdfSelection& selection : m_Selections) {
+    if (m_Selection.has_value()) {
         glm::vec2 min_corner;
         glm::vec2 max_corner;
-        m_ViewerMapping.SelectionToWorldRect(selection, min_corner, max_corner);
+        m_ViewerMapping.SelectionToWorldRect(*m_Selection, min_corner, max_corner);
         m_LineRenderer.DrawRectOutline(m_Camera, min_corner, max_corner, persistent_color);
     }
 
@@ -444,6 +435,43 @@ void Application::PreviousPage() {
     LoadPage(previous_page);
 }
 
+glm::vec2 Application::GetEffectiveSelectionPoint(const glm::vec2& world) const {
+    if (m_IsAspectLocked) {
+        return ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
+    }
+
+    return world;
+}
+
+void Application::MoveSelectionTo(const glm::vec2& current_world) {
+    if (!m_Selection.has_value()) {
+        return;
+    }
+
+    const glm::vec2 world_delta = current_world - m_MoveStartWorld;
+
+    const float page_x0 = m_ViewerMapping.GetPageX0();
+    const float page_y0 = m_ViewerMapping.GetPageY0();
+    const float page_x1 = m_ViewerMapping.GetPageX1();
+    const float page_y1 = m_ViewerMapping.GetPageY1();
+
+    const float page_w = page_x1 - page_x0;
+    const float page_h = page_y1 - page_y0;
+
+    const float quad_w = m_PageQuad.GetWidth();
+    const float quad_h = m_PageQuad.GetHeight();
+
+    pdf::PdfSelection moved = m_MoveStartSelection;
+
+    moved.X += world_delta.x * (page_w / quad_w);
+    moved.Y -= world_delta.y * (page_h / quad_h);
+
+    moved.X = std::clamp(moved.X, page_x0, page_x1 - moved.Width);
+    moved.Y = std::clamp(moved.Y, page_y0, page_y1 - moved.Height);
+
+    m_Selection = moved;
+}
+
 void Application::OnMouseButton(int button, int action, int /*mods*/, double mouse_x, double mouse_y) {
     if (button != GLFW_MOUSE_BUTTON_LEFT) {
         return;
@@ -465,35 +493,40 @@ void Application::OnMouseButton(int button, int action, int /*mods*/, double mou
     }
 
     if (action == GLFW_PRESS) {
+        if (m_Selection.has_value()) {
+            m_IsMovingSelection = true;
+            m_MoveStartWorld = world;
+            m_MoveStartSelection = *m_Selection;
+            return;
+        }
+
         if (m_ViewerMapping.IsInsidePage(world)) {
             m_IsSelecting = true;
             m_SelectionStartWorld = world;
             m_SelectionCurrentWorld = world;
         }
+
         return;
     }
 
     if (action == GLFW_RELEASE) {
-        if (!m_IsSelecting) {
+        if (m_IsMovingSelection) {
+            m_IsMovingSelection = false;
             return;
         }
 
-        glm::vec2 final_world = world;
+        if (m_IsSelecting) {
+            m_SelectionCurrentWorld = GetEffectiveSelectionPoint(world);
 
-        if (m_IsAspectLocked) {
-            final_world = ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
+            const pdf::PdfSelection selection = m_ViewerMapping.MakeSelectionFromWorldDrag(
+                m_CurrentPageIndex, m_SelectionStartWorld, m_SelectionCurrentWorld);
+
+            if (selection.Width > 4.0f && selection.Height > 4.0f) {
+                m_Selection = selection;
+            }
+
+            m_IsSelecting = false;
         }
-
-        m_SelectionCurrentWorld = final_world;
-
-        const pdf::PdfSelection selection = m_ViewerMapping.MakeSelectionFromWorldDrag(
-            m_CurrentPageIndex, m_SelectionStartWorld, m_SelectionCurrentWorld);
-
-        if (selection.Width > 4.0f && selection.Height > 4.0f) {
-            m_Selections.push_back(selection);
-        }
-
-        m_IsSelecting = false;
     }
 }
 
@@ -503,11 +536,19 @@ void Application::OnMouseMove(double mouse_x, double mouse_y) {
         return;
     }
 
+    if (m_ViewerMode != ViewerMode::Select) {
+        return;
+    }
+
     const glm::vec2 world = m_Camera.ScreenToWorld(mouse_x, mouse_y);
-    if (m_IsAspectLocked) {
-        m_SelectionCurrentWorld = ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
-    } else {
-        m_SelectionCurrentWorld = world;
+
+    if (m_IsMovingSelection) {
+        MoveSelectionTo(world);
+        return;
+    }
+
+    if (m_IsSelecting) {
+        m_SelectionCurrentWorld = GetEffectiveSelectionPoint(world);
     }
 }
 
@@ -582,8 +623,7 @@ bool Application::LoadPage(int page_index) {
     m_ViewerMapping.SetQuadSize(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
 
     m_CurrentPageIndex = page_index;
-    m_Selections.clear();
-    m_IsSelecting = false;
+    ClearSelections();
 
     return true;
 }

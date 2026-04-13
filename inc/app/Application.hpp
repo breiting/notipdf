@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include "app/AppConfig.hpp"
@@ -146,14 +147,15 @@ class Application {
    private:
     bool LoadPage(int page_index);
     void FitCurrentPageToView();
-    void UndoLastSelection();
     void ToggleViewerMode();
     void DrawSelectionOverlays() const;
     void OpenExportDialog();
     void DrawExportDialog();
     bool ConfirmExport();
     void ClearSelections();
+    void MoveSelectionTo(const glm::vec2& current_world);
     image::ImageOptimizationSettings BuildImageOptimizationSettings() const;
+    glm::vec2 GetEffectiveSelectionPoint(const glm::vec2& world) const;
 
     static std::string SanitizeFileName(const std::string& value);
     static const char* GetVoiceName(int index);
@@ -176,12 +178,16 @@ class Application {
 
     render::ViewerMapping m_ViewerMapping;
 
-    std::vector<pdf::PdfSelection> m_Selections;
+    std::optional<pdf::PdfSelection> m_Selection;
 
     bool m_IsSelecting = false;
+    bool m_IsMovingSelection = false;
     bool m_IsAspectLocked = false;
     glm::vec2 m_SelectionStartWorld = glm::vec2(0.0f);
     glm::vec2 m_SelectionCurrentWorld = glm::vec2(0.0f);
+
+    glm::vec2 m_MoveStartWorld = glm::vec2(0.0f);
+    pdf::PdfSelection m_MoveStartSelection;
 
     no::pdf::PdfExporter m_PdfExporter;
     pdf::MetaWriter m_MetaWriter;
