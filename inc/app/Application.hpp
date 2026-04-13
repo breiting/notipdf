@@ -59,6 +59,23 @@ class Application {
     bool ShouldClose() const;
 
     /**
+     * \brief Returns the active export aspect ratio.
+     *
+     * \return Width divided by height for the active export preset.
+     */
+    float GetActiveExportAspectRatio() const;
+
+    /**
+     * \brief Adjusts a drag point so that the selection keeps a fixed aspect ratio.
+     *
+     * \param anchor_world The drag start point in world space.
+     * \param current_world The current drag point in world space.
+     * \param aspect_ratio The target width/height ratio.
+     * \return The corrected drag point in world space.
+     */
+    glm::vec2 ApplyAspectLock(const glm::vec2& anchor_world, const glm::vec2& current_world, float aspect_ratio) const;
+
+    /**
      * \brief Updates the application state.
      *
      * \param dt The elapsed frame time in seconds.
@@ -146,6 +163,7 @@ class Application {
     std::vector<pdf::PdfSelection> m_Selections;
 
     bool m_IsSelecting = false;
+    bool m_IsShiftDown = false;
     glm::vec2 m_SelectionStartWorld = glm::vec2(0.0f);
     glm::vec2 m_SelectionCurrentWorld = glm::vec2(0.0f);
 

@@ -103,6 +103,10 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             FitCurrentPageToView();
             break;
 
+        case GLFW_KEY_A:
+            m_IsShiftDown = !m_IsShiftDown;
+            break;
+
         default:
             break;
     }
@@ -225,27 +229,40 @@ void Application::OnMouseButton(int button, int action, int /*mods*/, double mou
         return;
     }
 
-    if (m_ViewerMode == ViewerMode::Select) {
-        if (action == GLFW_PRESS) {
-            if (m_ViewerMapping.IsInsidePage(world)) {
-                m_IsSelecting = true;
-                m_SelectionStartWorld = world;
-                m_SelectionCurrentWorld = world;
-            }
-        } else if (action == GLFW_RELEASE) {
-            if (m_IsSelecting) {
-                m_SelectionCurrentWorld = world;
+    if (m_ViewerMode != ViewerMode::Select) {
+        return;
+    }
 
-                const pdf::PdfSelection selection = m_ViewerMapping.MakeSelectionFromWorldDrag(
-                    m_CurrentPageIndex, m_SelectionStartWorld, m_SelectionCurrentWorld);
-
-                if (selection.Width > 4.0f && selection.Height > 4.0f) {
-                    m_Selections.push_back(selection);
-                }
-
-                m_IsSelecting = false;
-            }
+    if (action == GLFW_PRESS) {
+        if (m_ViewerMapping.IsInsidePage(world)) {
+            m_IsSelecting = true;
+            m_SelectionStartWorld = world;
+            m_SelectionCurrentWorld = world;
         }
+        return;
+    }
+
+    if (action == GLFW_RELEASE) {
+        if (!m_IsSelecting) {
+            return;
+        }
+
+        glm::vec2 final_world = world;
+
+        if (m_IsShiftDown) {
+            final_world = ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
+        }
+
+        m_SelectionCurrentWorld = final_world;
+
+        const pdf::PdfSelection selection = m_ViewerMapping.MakeSelectionFromWorldDrag(
+            m_CurrentPageIndex, m_SelectionStartWorld, m_SelectionCurrentWorld);
+
+        if (selection.Width > 4.0f && selection.Height > 4.0f) {
+            m_Selections.push_back(selection);
+        }
+
+        m_IsSelecting = false;
     }
 }
 
@@ -255,13 +272,57 @@ void Application::OnMouseMove(double mouse_x, double mouse_y) {
         return;
     }
 
-    if (m_ViewerMode == ViewerMode::Select && m_IsSelecting) {
-        m_SelectionCurrentWorld = m_Camera.ScreenToWorld(mouse_x, mouse_y);
+    const glm::vec2 world = m_Camera.ScreenToWorld(mouse_x, mouse_y);
+    if (m_IsShiftDown) {
+        m_SelectionCurrentWorld = ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
+    } else {
+        m_SelectionCurrentWorld = world;
     }
 }
 
 void Application::OnScroll(double /*xoffset*/, double yoffset, double mouse_x, double mouse_y) {
     m_Camera.ZoomAt(yoffset, mouse_x, mouse_y);
+}
+
+float Application::GetActiveExportAspectRatio() const {
+    // TODO: fix it
+    return 1872.0f / 1404.0f;
+}
+
+glm::vec2 Application::ApplyAspectLock(const glm::vec2& anchor_world, const glm::vec2& current_world,
+                                       float aspect_ratio) const {
+    const glm::vec2 delta = current_world - anchor_world;
+
+    const float sign_x = (delta.x < 0.0f) ? -1.0f : 1.0f;
+    const float sign_y = (delta.y < 0.0f) ? -1.0f : 1.0f;
+
+    const float abs_dx = std::abs(delta.x);
+    const float abs_dy = std::abs(delta.y);
+
+    if (abs_dx < 1e-6f && abs_dy < 1e-6f) {
+        return current_world;
+    }
+
+    float locked_w = abs_dx;
+    float locked_h = abs_dy;
+
+    if (abs_dy < 1e-6f) {
+        locked_h = locked_w / aspect_ratio;
+    } else if (abs_dx < 1e-6f) {
+        locked_w = locked_h * aspect_ratio;
+    } else {
+        const float current_aspect = abs_dx / abs_dy;
+
+        if (current_aspect > aspect_ratio) {
+            locked_h = abs_dx / aspect_ratio;
+            locked_w = abs_dx;
+        } else {
+            locked_w = abs_dy * aspect_ratio;
+            locked_h = abs_dy;
+        }
+    }
+
+    return {anchor_world.x + sign_x * locked_w, anchor_world.y + sign_y * locked_h};
 }
 
 bool Application::LoadPage(int page_index) {
