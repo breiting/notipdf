@@ -40,17 +40,10 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
     fz_try(ctx) {
         page = fz_load_page(ctx, doc, selection.PageIndex);
 
-        const fz_rect bounds = fz_bound_page(ctx, page);
-
-        const float sel_x0 = bounds.x0;
-        const float sel_y0 = bounds.y0;
-        const float sel_x1 = bounds.x1;
-        const float sel_y1 = bounds.y1;
-
-        // const float sel_x0 = selection.X;
-        // const float sel_y0 = selection.Y;
-        // const float sel_x1 = selection.X + selection.Width;
-        // const float sel_y1 = selection.Y + selection.Height;
+        const float sel_x0 = selection.X;
+        const float sel_y0 = selection.Y;
+        const float sel_x1 = selection.X + selection.Width;
+        const float sel_y1 = selection.Y + selection.Height;
 
         const float sel_w = sel_x1 - sel_x0;
         const float sel_h = sel_y1 - sel_y0;
