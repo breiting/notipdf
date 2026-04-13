@@ -2,7 +2,9 @@
 
 #include <string>
 
+#include "app/ExportDialogState.hpp"
 #include "app/ViewerMode.hpp"
+#include "pdf/MetaWriter.hpp"
 #include "pdf/PdfDocument.hpp"
 #include "pdf/PdfExporter.hpp"
 #include "pdf/PdfRenderer.hpp"
@@ -52,6 +54,11 @@ class Application {
      * \param mods The GLFW modifier flags.
      */
     void OnKey(int key, int action, int mods);
+
+    /**
+     * \brief Draws transient ImGui UI such as modal dialogs.
+     */
+    void DrawGui();
 
     /**
      * \brief Returns whether the application requested shutdown.
@@ -141,6 +148,12 @@ class Application {
     void ExportLastSelection();
     void ToggleViewerMode();
     void DrawSelectionOverlays() const;
+    void OpenExportDialog();
+    void DrawExportDialog();
+    bool ConfirmExport();
+
+    static std::string SanitizeFileName(const std::string& value);
+    static const char* GetVoiceName(int index);
 
     pdf::PdfDocument m_Document;
     pdf::PdfRenderer m_PdfRenderer;
@@ -168,6 +181,9 @@ class Application {
     glm::vec2 m_SelectionCurrentWorld = glm::vec2(0.0f);
 
     no::pdf::PdfExporter m_PdfExporter;
+    pdf::MetaWriter m_MetaWriter;
+    ExportDialogState m_ExportDialogState;
+    bool m_SetFocusOnExportDialog = false;
 };
 
 }  // namespace no::app

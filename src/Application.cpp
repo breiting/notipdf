@@ -4,7 +4,10 @@
 #define GLFW_INCLUDE_NONE
 #endif
 #include <GLFW/glfw3.h>
+#include <imgui.h>
 
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
@@ -96,7 +99,7 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             break;
 
         case GLFW_KEY_E:
-            ExportLastSelection();
+            OpenExportDialog();
             break;
 
         case GLFW_KEY_F:
@@ -109,6 +112,198 @@ void Application::OnKey(int key, int action, int /*mods*/) {
 
         default:
             break;
+    }
+}
+
+void Application::DrawGui() {
+    DrawExportDialog();
+}
+
+void Application::OpenExportDialog() {
+    if (m_Selections.empty()) {
+        return;
+    }
+
+    m_ExportDialogState.IsOpen = true;
+    m_SetFocusOnExportDialog = true;
+
+    if (m_ExportDialogState.Title.empty()) {
+        m_ExportDialogState.Title = "untitled";
+    }
+
+    if (m_ExportDialogState.Author.empty()) {
+        m_ExportDialogState.Author = "";
+    }
+}
+
+void Application::DrawExportDialog() {
+    if (!m_ExportDialogState.IsOpen) {
+        return;
+    }
+
+    ImGui::OpenPopup("Export Selection");
+
+    if (ImGui::BeginPopupModal("Export Selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        char title_buffer[256];
+        char author_buffer[256];
+
+        std::snprintf(title_buffer, sizeof(title_buffer), "%s", m_ExportDialogState.Title.c_str());
+        std::snprintf(author_buffer, sizeof(author_buffer), "%s", m_ExportDialogState.Author.c_str());
+
+        if (m_SetFocusOnExportDialog) {
+            ImGui::SetKeyboardFocusHere();
+            m_SetFocusOnExportDialog = false;
+        }
+
+        if (ImGui::InputText("Title", title_buffer, sizeof(title_buffer))) {
+            m_ExportDialogState.Title = title_buffer;
+        }
+
+        if (ImGui::InputText("Author", author_buffer, sizeof(author_buffer))) {
+            m_ExportDialogState.Author = author_buffer;
+        }
+
+        ImGui::TextUnformatted("Stimme");
+
+        int voice_index = m_ExportDialogState.VoiceIndex;
+        if (ImGui::RadioButton("Trompete 1", voice_index == 0)) {
+            voice_index = 0;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Trompete 2", voice_index == 1)) {
+            voice_index = 1;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Fluegelhorn 1", voice_index == 2)) {
+            voice_index = 2;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Fluegelhorn 2", voice_index == 3)) {
+            voice_index = 3;
+        }
+
+        m_ExportDialogState.VoiceIndex = voice_index;
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Cancel", ImVec2(120.0f, 0.0f))) {
+            m_ExportDialogState.IsOpen = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Export", ImVec2(120.0f, 0.0f))) {
+            if (ConfirmExport()) {
+                m_ExportDialogState.IsOpen = false;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+bool Application::ConfirmExport() {
+    if (m_Selections.empty()) {
+        return false;
+    }
+
+    const pdf::PdfSelection& selection = m_Selections.back();
+
+    const std::string title_slug = SanitizeFileName(m_ExportDialogState.Title);
+    const std::string voice_slug = SanitizeFileName(GetVoiceName(m_ExportDialogState.VoiceIndex));
+
+    const std::string pdf_file_name = title_slug + "_" + voice_slug + ".pdf";
+    const std::string json_file_name = title_slug + "_" + voice_slug + ".json";
+
+    const std::filesystem::path output_pdf = std::filesystem::current_path() / pdf_file_name;
+
+    const std::filesystem::path output_json = std::filesystem::current_path() / json_file_name;
+
+    no::pdf::PdfExporter exporter;
+
+    if (!exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape)) {
+        std::cerr << "Export failed.\n";
+        return false;
+    }
+
+    pdf::MetaData meta_data;
+    meta_data.Title = m_ExportDialogState.Title;
+    meta_data.Author = m_ExportDialogState.Author;
+    meta_data.Voice = GetVoiceName(m_ExportDialogState.VoiceIndex);
+    meta_data.PdfFileName = pdf_file_name;
+
+    if (!m_MetaWriter.Write(meta_data, output_json)) {
+        std::cerr << "Writing meta.json failed.\n";
+        return false;
+    }
+
+    std::cout << "Exported PDF: " << output_pdf << '\n';
+    std::cout << "Exported metadata: " << output_json << '\n';
+
+    return true;
+}
+
+std::string Application::SanitizeFileName(const std::string& value) {
+    std::string result;
+    result.reserve(value.size());
+
+    for (char c : value) {
+        if (std::isalnum(static_cast<unsigned char>(c))) {
+            result.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+        } else if (std::isspace(static_cast<unsigned char>(c)) || c == '-' || c == '_') {
+            result.push_back('_');
+        }
+    }
+
+    if (result.empty()) {
+        result = "untitled";
+    }
+
+    std::string collapsed;
+    collapsed.reserve(result.size());
+
+    bool previous_was_underscore = false;
+    for (char c : result) {
+        if (c == '_') {
+            if (!previous_was_underscore) {
+                collapsed.push_back(c);
+            }
+            previous_was_underscore = true;
+        } else {
+            collapsed.push_back(c);
+            previous_was_underscore = false;
+        }
+    }
+
+    while (!collapsed.empty() && collapsed.front() == '_') {
+        collapsed.erase(collapsed.begin());
+    }
+
+    while (!collapsed.empty() && collapsed.back() == '_') {
+        collapsed.pop_back();
+    }
+
+    if (collapsed.empty()) {
+        collapsed = "untitled";
+    }
+
+    return collapsed;
+}
+
+const char* Application::GetVoiceName(int index) {
+    switch (index) {
+        case 0:
+            return "trompete_1";
+        case 1:
+            return "trompete_2";
+        case 2:
+            return "fluegelhorn_1";
+        case 3:
+            return "fluegelhorn_2";
+        default:
+            return "unknown";
     }
 }
 
