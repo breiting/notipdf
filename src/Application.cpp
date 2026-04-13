@@ -5,11 +5,15 @@
 #endif
 #include <GLFW/glfw3.h>
 
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <vector>
 
 namespace no::app {
+
+Application::Application() : m_PdfExporter(m_ProcessRunner) {
+}
 
 bool Application::Initialize(const std::string& pdf_path, int viewport_width, int viewport_height) {
     if (!m_Document.Open(pdf_path)) {
@@ -128,9 +132,26 @@ void Application::ExportLastSelection() {
 
     const pdf::PdfSelection& selection = m_Selections.back();
 
-    std::cout << "Export selection: page=" << selection.PageIndex << " x=" << selection.X << " y=" << selection.Y
-              << " w=" << selection.Width << " h=" << selection.Height << '\n';
+    const std::filesystem::path output_path =
+        std::filesystem::current_path() / ("export_page_" + std::to_string(selection.PageIndex + 1) + ".pdf");
+
+    pdf::ExportRequest request;
+    request.InputPdfPath = m_Document.GetPath();
+    request.OutputPdfPath = output_path;
+    request.Selection = selection;
+    request.RenderedPageWidth = m_RenderedPage.width;
+    request.RenderedPageHeight = m_RenderedPage.height;
+    request.OptimizeForEInk = false;
+
+    const pdf::ExportResult result = m_PdfExporter.ExportSelection(m_Document, request);
+    if (!result.Success) {
+        std::cerr << "Export failed: " << result.Message << '\n';
+        return;
+    }
+
+    std::cout << "Exported PDF to: " << output_path << '\n';
 }
+
 void Application::Update(float dt) {
     if (!m_Initialized) {
         return;

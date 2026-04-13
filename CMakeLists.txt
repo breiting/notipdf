@@ -143,6 +143,8 @@ add_executable(notipdf
     src/LineRenderer.cpp
     src/Logger.cpp
     src/PdfDocument.cpp
+    src/PdfExporter.cpp
+    src/ProcessRunner.cpp
     src/PdfQuad.cpp
     src/PdfRenderer.cpp
     src/PdfTexture.cpp
