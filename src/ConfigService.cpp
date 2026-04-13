@@ -7,12 +7,17 @@
 namespace no::app {
 
 std::filesystem::path ConfigService::GetConfigDirectory() const {
-    const char* home = std::getenv("HOME");
-    if (home == nullptr) {
-        return std::filesystem::current_path() / ".notipdf";
+    const char* xdg_config_home = std::getenv("XDG_CONFIG_HOME");
+    if (xdg_config_home != nullptr && xdg_config_home[0] != '\0') {
+        return std::filesystem::path(xdg_config_home) / "notipdf";
     }
 
-    return std::filesystem::path(home) / ".notipdf";
+    const char* home = std::getenv("HOME");
+    if (home != nullptr && home[0] != '\0') {
+        return std::filesystem::path(home) / ".config" / "notipdf";
+    }
+
+    return std::filesystem::current_path() / ".notipdf";
 }
 
 std::filesystem::path ConfigService::GetConfigPath() const {
@@ -55,8 +60,12 @@ bool ConfigService::Load(AppConfig& output_config) const {
 
 bool ConfigService::Save(const AppConfig& config) const {
     const std::filesystem::path directory = GetConfigDirectory();
+
     std::error_code ec;
     std::filesystem::create_directories(directory, ec);
+    if (ec) {
+        return false;
+    }
 
     std::ofstream file(GetConfigPath());
     if (!file.is_open()) {

@@ -6,17 +6,25 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
-#include <algorithm>
 #include <cctype>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <vector>
 
+#include "core/Logger.hpp"
+
 namespace no::app {
 
 bool Application::Initialize(const std::string& pdf_path, int viewport_width, int viewport_height) {
+    LOG(Info) << "Config path: " << m_ConfigService.GetConfigPath();
     m_ConfigService.Load(m_Config);
+
+    if (m_ConfigService.Load(m_Config)) {
+        LOG(Info) << "Loaded config from: " << m_ConfigService.GetConfigPath();
+    } else {
+        LOG(Info) << "Using default config. Expected path: " << m_ConfigService.GetConfigPath();
+    }
     if (!m_Document.Open(pdf_path)) {
         return false;
     }
