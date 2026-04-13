@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <iostream>
 
+#include "core/Logger.hpp"
+
 namespace no::pdf {
 
 namespace {
@@ -102,7 +104,7 @@ bool PdfExporter::Export(const PdfDocument& document, const PdfSelection& select
     const ExportPreset render_preset = GetRenderPresetForRotation(preset, rotation_degrees);
 
     if (!m_Renderer.RenderSelection(document, selection, render_preset, 0, image)) {
-        std::cerr << "PdfExporter: RenderSelection failed.\n";
+        LOG(Error) << "PdfExporter: RenderSelection failed.\n";
         return false;
     }
 
@@ -115,14 +117,14 @@ bool PdfExporter::Export(const PdfDocument& document, const PdfSelection& select
     const std::filesystem::path pgm_path = output_path.parent_path() / (output_path.stem().string() + ".pgm");
 
     if (!m_Writer.WritePgm(image, pgm_path)) {
-        std::cerr << "PdfExporter: WritePgm failed.\n";
+        LOG(Error) << "PdfExporter: WritePgm failed.\n";
         return false;
     }
 
-    std::cout << "Debug PGM written to: " << pgm_path << '\n';
+    LOG(Info) << "Debug PGM written to: " << pgm_path;
 
     if (!m_Writer.Write(image, output_path, m_Backend)) {
-        std::cerr << "PdfExporter: PDF write failed.\n";
+        LOG(Error) << "PdfExporter: PDF write failed.\n";
         return false;
     }
 

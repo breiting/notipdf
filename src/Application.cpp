@@ -292,7 +292,7 @@ bool Application::ConfirmExport() {
         exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape, m_RotationDegrees,
                         m_ExportDialogState.OptimizeForEInk, optimization_settings);
     if (!export_success) {
-        std::cerr << "Export failed.\n";
+        LOG(Error) << "Export failed.\n";
         return false;
     }
 
@@ -303,12 +303,12 @@ bool Application::ConfirmExport() {
     meta_data.PdfFileName = pdf_file_name;
 
     if (!m_MetaWriter.Write(meta_data, output_json)) {
-        std::cerr << "Writing meta.json failed.\n";
+        LOG(Error) << "Writing meta.json failed.\n";
         return false;
     }
 
-    std::cout << "Exported PDF: " << output_pdf << '\n';
-    std::cout << "Exported metadata: " << output_json << '\n';
+    LOG(Info) << "Exported PDF: " << output_pdf;
+    LOG(Info) << "Exported metadata: " << output_json;
 
     m_Config.DefaultOptimizeForEInk = m_ExportDialogState.OptimizeForEInk;
     m_Config.DefaultThresholdBlackWhite = m_ExportDialogState.ThresholdToBlackAndWhite;
