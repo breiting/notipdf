@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "pdf/PdfBackend.hpp"
+
 namespace no::app {
 
 /**
@@ -14,6 +16,7 @@ struct AppConfig {
     bool DefaultThresholdBlackWhite = false;
 
     int DefaultVoiceIndex = 0;
+    pdf::PdfBackend Backend = pdf::PdfBackend::Sips;
 };
 
 }  // namespace no::app

@@ -4,6 +4,8 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
+#include "pdf/PdfBackend.hpp"
+
 namespace no::app {
 
 std::filesystem::path ConfigService::GetConfigDirectory() const {
@@ -53,6 +55,16 @@ bool ConfigService::Load(AppConfig& output_config) const {
 
     if (json.contains("default_voice")) {
         output_config.DefaultVoiceIndex = json["default_voice"].get<int>();
+    }
+
+    if (json.contains("pdf_backend")) {
+        const std::string backend = json["pdf_backend"].get<std::string>();
+
+        if (backend == "magick") {
+            output_config.Backend = pdf::PdfBackend::Magick;
+        } else {
+            output_config.Backend = pdf::PdfBackend::Sips;
+        }
     }
 
     return true;

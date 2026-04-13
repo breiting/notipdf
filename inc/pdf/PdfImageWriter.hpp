@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "image/GrayImage.hpp"
+#include "pdf/PdfBackend.hpp"
 
 namespace no::pdf {
 
@@ -21,7 +22,8 @@ class PdfImageWriter {
      * \param output_path The destination PDF path.
      * \return True on success, false otherwise.
      */
-    bool Write(const image::GrayImage& image, const std::filesystem::path& output_path) const;
+    bool Write(const image::GrayImage& image, const std::filesystem::path& output_path,
+               PdfBackend backend = PdfBackend::Sips) const;
 
     /**
      * \brief Writes a grayscale image as a raw PGM file for debugging.

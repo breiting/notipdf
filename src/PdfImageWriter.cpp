@@ -1,12 +1,13 @@
 #include "pdf/PdfImageWriter.hpp"
 
+#include <stb_image_write.h>
+
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <system_error>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "pdf/PdfBackend.hpp"
 
 namespace no::pdf {
 
@@ -33,7 +34,8 @@ std::string EscapeShellArgument(const std::string& value) {
 
 }  // namespace
 
-bool PdfImageWriter::Write(const image::GrayImage& image, const std::filesystem::path& output_path) const {
+bool PdfImageWriter::Write(const image::GrayImage& image, const std::filesystem::path& output_path,
+                           pdf::PdfBackend backend) const {
     if (image.Width <= 0 || image.Height <= 0 || image.Pixels.empty()) {
         return false;
     }
@@ -46,6 +48,11 @@ bool PdfImageWriter::Write(const image::GrayImage& image, const std::filesystem:
 
     const std::string command = "sips -s format pdf " + EscapeShellArgument(temp_png_path.string()) + " --out " +
                                 EscapeShellArgument(output_path.string()) + " > /dev/null 2>&1";
+
+    if (backend == PdfBackend::Magick) {
+        const std::string command = "magick " + EscapeShellArgument(temp_png_path.string()) + " " +
+                                    EscapeShellArgument(output_path.string()) + " > /dev/null 2>&1";
+    }
 
     const int result = std::system(command.c_str());
 
