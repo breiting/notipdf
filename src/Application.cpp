@@ -89,7 +89,8 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             PreviousPage();
             break;
 
-        case GLFW_KEY_Z:
+        case GLFW_KEY_DELETE:
+        case GLFW_KEY_BACKSPACE:
             UndoLastSelection();
             break;
 
