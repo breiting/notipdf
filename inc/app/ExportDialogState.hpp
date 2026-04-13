@@ -14,6 +14,9 @@ struct ExportDialogState {
     std::string Author;
 
     int VoiceIndex = 0;
+
+    bool OptimizeForEInk = true;
+    bool ThresholdToBlackAndWhite = false;
 };
 
 }  // namespace no::app

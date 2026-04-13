@@ -6,7 +6,8 @@
 namespace no::pdf {
 
 bool PdfExporter::Export(const PdfDocument& document, const PdfSelection& selection,
-                         const std::filesystem::path& output_path, ExportPreset preset) {
+                         const std::filesystem::path& output_path, ExportPreset preset, bool enable_optimization,
+                         const no::image::ImageOptimizationSettings& optimization_settings) {
     image::GrayImage image;
 
     if (!m_Renderer.RenderSelection(document, selection, preset, image)) {
@@ -14,9 +15,12 @@ bool PdfExporter::Export(const PdfDocument& document, const PdfSelection& select
         return false;
     }
 
+    if (enable_optimization) {
+        m_ImageOptimizer.Optimize(optimization_settings, image);
+    }
+
     const std::filesystem::path pgm_path = output_path.parent_path() / (output_path.stem().string() + ".pgm");
 
-    // DEBUG ONLY
     // if (!m_Writer.WritePgm(image, pgm_path)) {
     //     std::cerr << "PdfExporter: WritePgm failed.\n";
     //     return false;

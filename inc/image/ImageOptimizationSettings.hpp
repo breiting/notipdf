@@ -11,8 +11,9 @@ struct ImageOptimizationSettings {
     bool EnableSharpen = true;
     bool EnableThreshold = false;
 
-    float WhiteClipThreshold = 0.92f;
     float SharpenAmount = 0.35f;
+
+    int WhiteClipThreshold = 235;
     int ThresholdValue = 180;
 };
 

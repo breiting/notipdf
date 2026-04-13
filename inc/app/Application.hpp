@@ -145,12 +145,12 @@ class Application {
     bool LoadPage(int page_index);
     void FitCurrentPageToView();
     void UndoLastSelection();
-    void ExportLastSelection();
     void ToggleViewerMode();
     void DrawSelectionOverlays() const;
     void OpenExportDialog();
     void DrawExportDialog();
     bool ConfirmExport();
+    image::ImageOptimizationSettings BuildImageOptimizationSettings() const;
 
     static std::string SanitizeFileName(const std::string& value);
     static const char* GetVoiceName(int index);

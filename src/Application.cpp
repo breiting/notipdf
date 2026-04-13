@@ -136,6 +136,20 @@ void Application::OpenExportDialog() {
     }
 }
 
+image::ImageOptimizationSettings Application::BuildImageOptimizationSettings() const {
+    image::ImageOptimizationSettings settings;
+    settings.EnableWhiteClip = true;
+    settings.EnableContrastStretch = true;
+    settings.EnableSharpen = true;
+    settings.EnableThreshold = m_ExportDialogState.ThresholdToBlackAndWhite;
+
+    settings.WhiteClipThreshold = 235;
+    settings.SharpenAmount = 0.30f;
+    settings.ThresholdValue = 180;
+
+    return settings;
+}
+
 void Application::DrawExportDialog() {
     if (!m_ExportDialogState.IsOpen) {
         return;
@@ -181,6 +195,10 @@ void Application::DrawExportDialog() {
         if (ImGui::RadioButton("Fluegelhorn 2", voice_index == 3)) {
             voice_index = 3;
         }
+        ImGui::Separator();
+
+        ImGui::Checkbox("Optimize for E-Ink", &m_ExportDialogState.OptimizeForEInk);
+        ImGui::Checkbox("Threshold to black/white", &m_ExportDialogState.ThresholdToBlackAndWhite);
 
         m_ExportDialogState.VoiceIndex = voice_index;
 
@@ -223,7 +241,10 @@ bool Application::ConfirmExport() {
 
     no::pdf::PdfExporter exporter;
 
-    if (!exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape)) {
+    const image::ImageOptimizationSettings optimization_settings = BuildImageOptimizationSettings();
+
+    if (!exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape,
+                         m_ExportDialogState.OptimizeForEInk, optimization_settings)) {
         std::cerr << "Export failed.\n";
         return false;
     }
@@ -319,19 +340,6 @@ void Application::UndoLastSelection() {
     if (!m_Selections.empty()) {
         m_Selections.pop_back();
     }
-}
-
-void Application::ExportLastSelection() {
-    if (m_Selections.empty()) return;
-
-    const auto& selection = m_Selections.back();
-
-    const std::filesystem::path output = std::filesystem::current_path() / "export.pdf";
-
-    no::pdf::PdfExporter exporter;
-
-    exporter.Export(m_Document, selection, output, no::pdf::ExportPreset::InkPad4Landscape);
-    std::cout << "Exported PDF to: " << output << '\n';
 }
 
 void Application::Update(float dt) {
