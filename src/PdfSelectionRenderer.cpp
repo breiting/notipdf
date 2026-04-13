@@ -28,7 +28,7 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
 
     out_image.Width = target_w;
     out_image.Height = target_h;
-    out_image.Pixels.resize(target_w * target_h, 255);
+    out_image.Pixels.assign(target_w * target_h, 255);
 
     fz_context* ctx = document.GetContext();
     fz_document* doc = document.GetHandle();
@@ -40,13 +40,24 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
     fz_try(ctx) {
         page = fz_load_page(ctx, doc, selection.PageIndex);
 
-        const float sel_x0 = selection.X;
-        const float sel_y0 = selection.Y;
-        const float sel_x1 = selection.X + selection.Width;
-        const float sel_y1 = selection.Y + selection.Height;
+        const fz_rect bounds = fz_bound_page(ctx, page);
+
+        const float sel_x0 = bounds.x0;
+        const float sel_y0 = bounds.y0;
+        const float sel_x1 = bounds.x1;
+        const float sel_y1 = bounds.y1;
+
+        // const float sel_x0 = selection.X;
+        // const float sel_y0 = selection.Y;
+        // const float sel_x1 = selection.X + selection.Width;
+        // const float sel_y1 = selection.Y + selection.Height;
 
         const float sel_w = sel_x1 - sel_x0;
         const float sel_h = sel_y1 - sel_y0;
+
+        if (sel_w <= 0.0f || sel_h <= 0.0f) {
+            fz_throw(ctx, FZ_ERROR_ARGUMENT, "Invalid selection size.");
+        }
 
         const float scale_x = static_cast<float>(target_w) / sel_w;
         const float scale_y = static_cast<float>(target_h) / sel_h;
@@ -68,25 +79,31 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
 
         const fz_irect bbox = fz_make_irect(0, 0, target_w, target_h);
 
-        pix = fz_new_pixmap_with_bbox(ctx, fz_device_gray(ctx), bbox, nullptr, 1);
+        // IMPORTANT: alpha = 0, so we get exactly 1 byte per pixel in Gray mode.
+        pix = fz_new_pixmap_with_bbox(ctx, fz_device_gray(ctx), bbox, nullptr, 0);
         fz_clear_pixmap_with_value(ctx, pix, 255);
 
         dev = fz_new_draw_device(ctx, m, pix);
         fz_run_page(ctx, page, dev, fz_identity, nullptr);
         fz_close_device(ctx, dev);
 
-        unsigned char* src = fz_pixmap_samples(ctx, pix);
+        const unsigned char* src = fz_pixmap_samples(ctx, pix);
         const int stride = fz_pixmap_stride(ctx, pix);
+        const int width = fz_pixmap_width(ctx, pix);
+        const int height = fz_pixmap_height(ctx, pix);
+        const int components = fz_pixmap_components(ctx, pix);
+
+        std::cout << "Selection page=" << selection.PageIndex << " x=" << selection.X << " y=" << selection.Y
+                  << " w=" << selection.Width << " h=" << selection.Height << " | target=" << target_w << "x"
+                  << target_h << " | pix=" << width << "x" << height << " | stride=" << stride
+                  << " | components=" << components << " | scale=" << scale << " | offset=(" << offset_x << ","
+                  << offset_y << ")"
+                  << " | matrix=(" << m.a << "," << m.b << "," << m.c << "," << m.d << "," << m.e << "," << m.f
+                  << ")\n";
 
         for (int y = 0; y < target_h; ++y) {
             std::memcpy(&out_image.Pixels[y * target_w], src + y * stride, target_w);
         }
-
-        std::cout << "Selection page=" << selection.PageIndex << " x=" << selection.X << " y=" << selection.Y
-                  << " w=" << selection.Width << " h=" << selection.Height << " | target=" << target_w << "x"
-                  << target_h << " | scale=" << scale << " | offset=(" << offset_x << "," << offset_y << ")"
-                  << " | matrix=(" << m.a << "," << m.b << "," << m.c << "," << m.d << "," << m.e << "," << m.f
-                  << ")\n";
     }
     fz_always(ctx) {
         if (dev != nullptr) {
