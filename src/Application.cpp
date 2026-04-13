@@ -8,11 +8,11 @@
 namespace no::app {
 
 bool Application::Initialize(const std::string& pdf_path, int viewport_width, int viewport_height) {
-    if (!document_.Open(pdf_path)) {
+    if (!m_Document.Open(pdf_path)) {
         return false;
     }
 
-    if (document_.GetPageCount() <= 0) {
+    if (m_Document.GetPageCount() <= 0) {
         return false;
     }
 
@@ -35,7 +35,7 @@ bool Application::Initialize(const std::string& pdf_path, int viewport_width, in
 }
 
 void Application::Shutdown() {
-    document_.Close();
+    m_Document.Close();
     initialized_ = false;
 }
 
@@ -100,12 +100,12 @@ void Application::SetViewportSize(int width, int height) {
 }
 
 void Application::NextPage() {
-    if (!document_.IsOpen()) {
+    if (!m_Document.IsOpen()) {
         return;
     }
 
     const int next_page = current_page_index_ + 1;
-    if (next_page >= document_.GetPageCount()) {
+    if (next_page >= m_Document.GetPageCount()) {
         return;
     }
 
@@ -113,7 +113,7 @@ void Application::NextPage() {
 }
 
 void Application::PreviousPage() {
-    if (!document_.IsOpen()) {
+    if (!m_Document.IsOpen()) {
         return;
     }
 
@@ -144,7 +144,7 @@ void Application::OnScroll(double /*xoffset*/, double yoffset, double mouse_x, d
 }
 
 bool Application::LoadPage(int page_index) {
-    if (!pdf_renderer_.RenderPage(document_, page_index, 2.0f, rendered_page_)) {
+    if (!m_PdfRenderer.RenderPage(m_Document, page_index, 2.0f, rendered_page_)) {
         return false;
     }
 

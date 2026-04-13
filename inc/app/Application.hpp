@@ -108,12 +108,12 @@ class Application {
     bool LoadPage(int page_index);
     void FitCurrentPageToView();
 
-    pdf::PdfDocument document_;
-    pdf::PdfRenderer pdf_renderer_;
-    pdf::RenderedPage rendered_page_;
+    pdf::PdfDocument m_Document;
+    pdf::PdfRenderer m_PdfRenderer;
+    pdf::RenderedPage m_RenderedPage;
 
-    render::PdfTexture page_texture_;
-    render::PdfQuad page_quad_;
+    render::PdfTexture m_PageTexture;
+    render::PdfQuad m_PageQuad;
     render::PdfViewerRenderer viewer_renderer_;
     render::Camera2D camera_;
 
