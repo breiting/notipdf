@@ -45,8 +45,18 @@ void Application::OnKey(int key, int action, int /*mods*/) {
     }
 
     switch (key) {
-        case GLFW_KEY_Q:
+        case GLFW_KEY_ESCAPE:
             should_close_ = true;
+            break;
+
+        case GLFW_KEY_N:
+        case GLFW_KEY_J:
+            NextPage();
+            break;
+
+        case GLFW_KEY_P:
+        case GLFW_KEY_K:
+            PreviousPage();
             break;
 
         case GLFW_KEY_F:
@@ -87,6 +97,32 @@ void Application::Render() {
 void Application::SetViewportSize(int width, int height) {
     viewer_renderer_.SetViewportSize(width, height);
     camera_.SetViewportSize(width, height);
+}
+
+void Application::NextPage() {
+    if (!document_.IsOpen()) {
+        return;
+    }
+
+    const int next_page = current_page_index_ + 1;
+    if (next_page >= document_.GetPageCount()) {
+        return;
+    }
+
+    LoadPage(next_page);
+}
+
+void Application::PreviousPage() {
+    if (!document_.IsOpen()) {
+        return;
+    }
+
+    const int previous_page = current_page_index_ - 1;
+    if (previous_page < 0) {
+        return;
+    }
+
+    LoadPage(previous_page);
 }
 
 void Application::OnMouseButton(int button, int action, int /*mods*/, double mouse_x, double mouse_y) {

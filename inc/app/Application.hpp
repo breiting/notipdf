@@ -58,6 +58,16 @@ class Application {
     void Render();
 
     /**
+     * \brief Loads the next page if available.
+     */
+    void NextPage();
+
+    /**
+     * \brief Loads the previous page if available.
+     */
+    void PreviousPage();
+
+    /**
      * \brief Handles viewport size changes.
      *
      * \param width The new width.
