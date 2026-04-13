@@ -103,8 +103,8 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             FitCurrentPageToView();
             break;
 
-        case GLFW_KEY_A:
-            m_IsShiftDown = !m_IsShiftDown;
+        case GLFW_KEY_L:
+            m_IsAspectLocked = !m_IsAspectLocked;
             break;
 
         default:
@@ -249,7 +249,7 @@ void Application::OnMouseButton(int button, int action, int /*mods*/, double mou
 
         glm::vec2 final_world = world;
 
-        if (m_IsShiftDown) {
+        if (m_IsAspectLocked) {
             final_world = ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
         }
 
@@ -273,7 +273,7 @@ void Application::OnMouseMove(double mouse_x, double mouse_y) {
     }
 
     const glm::vec2 world = m_Camera.ScreenToWorld(mouse_x, mouse_y);
-    if (m_IsShiftDown) {
+    if (m_IsAspectLocked) {
         m_SelectionCurrentWorld = ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
     } else {
         m_SelectionCurrentWorld = world;

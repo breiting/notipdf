@@ -163,7 +163,7 @@ class Application {
     std::vector<pdf::PdfSelection> m_Selections;
 
     bool m_IsSelecting = false;
-    bool m_IsShiftDown = false;
+    bool m_IsAspectLocked = false;
     glm::vec2 m_SelectionStartWorld = glm::vec2(0.0f);
     glm::vec2 m_SelectionCurrentWorld = glm::vec2(0.0f);
 
