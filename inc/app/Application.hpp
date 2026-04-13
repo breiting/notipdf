@@ -32,6 +32,20 @@ class Application {
     void Shutdown();
 
     /**
+     * \brief Handles keyboard input.
+     *
+     * \param key The GLFW key code.
+     * \param action The GLFW action.
+     * \param mods The GLFW modifier flags.
+     */
+    void OnKey(int key, int action, int mods);
+
+    /**
+     * \brief Returns whether the application requested shutdown.
+     */
+    bool ShouldClose() const;
+
+    /**
      * \brief Updates the application state.
      *
      * \param dt The elapsed frame time in seconds.
@@ -82,6 +96,7 @@ class Application {
 
    private:
     bool LoadPage(int page_index);
+    void FitCurrentPageToView();
 
     pdf::PdfDocument document_;
     pdf::PdfRenderer pdf_renderer_;
@@ -93,7 +108,8 @@ class Application {
     render::Camera2D camera_;
 
     int current_page_index_;
-    bool initialized_;
+    bool initialized_ = false;
+    bool should_close_ = false;
 };
 
 }  // namespace no::app

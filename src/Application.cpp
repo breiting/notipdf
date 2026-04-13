@@ -39,6 +39,33 @@ void Application::Shutdown() {
     initialized_ = false;
 }
 
+void Application::OnKey(int key, int action, int /*mods*/) {
+    if (action != GLFW_PRESS) {
+        return;
+    }
+
+    switch (key) {
+        case GLFW_KEY_Q:
+            should_close_ = true;
+            break;
+
+        case GLFW_KEY_F:
+            FitCurrentPageToView();
+            break;
+
+        default:
+            break;
+    }
+}
+
+bool Application::ShouldClose() const {
+    return should_close_;
+}
+
+void Application::FitCurrentPageToView() {
+    camera_.FitToContent(page_quad_.GetWidth(), page_quad_.GetHeight());
+}
+
 void Application::Update(float dt) {
     if (!initialized_) {
         return;
@@ -92,7 +119,7 @@ bool Application::LoadPage(int page_index) {
     const float aspect = static_cast<float>(rendered_page_.width) / static_cast<float>(rendered_page_.height);
 
     page_quad_.SetSize(aspect, 1.0f);
-    camera_.FitToContent(page_quad_.GetWidth(), page_quad_.GetHeight());
+    FitCurrentPageToView();
 
     current_page_index_ = page_index;
     return true;

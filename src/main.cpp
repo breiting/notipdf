@@ -12,6 +12,14 @@ namespace {
 no::app::Application* g_app = nullptr;
 no::ui::Window* g_window = nullptr;
 
+void KeyCallback(GLFWwindow* native, int key, int scancode, int action, int mods) {
+    (void)native;
+    (void)scancode;
+
+    if (g_app != nullptr) {
+        g_app->OnKey(key, action, mods);
+    }
+}
 void MouseButtonCallback(GLFWwindow* native, int button, int action, int mods) {
     if (g_app == nullptr || g_window == nullptr) {
         return;
@@ -76,6 +84,7 @@ int main(int argc, char** argv) {
     g_window = &window;
 
     GLFWwindow* native = window.GetNative();
+    glfwSetKeyCallback(native, KeyCallback);
     glfwSetMouseButtonCallback(native, MouseButtonCallback);
     glfwSetCursorPosCallback(native, CursorPosCallback);
     glfwSetScrollCallback(native, ScrollCallback);
@@ -84,6 +93,8 @@ int main(int argc, char** argv) {
     double last_time = glfwGetTime();
 
     while (window.PollEvents()) {
+        if (app.ShouldClose()) break;
+
         const double current_time = glfwGetTime();
         const float dt = static_cast<float>(current_time - last_time);
         last_time = current_time;
