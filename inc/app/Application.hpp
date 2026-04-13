@@ -7,9 +7,9 @@
 #include "app/ConfigService.hpp"
 #include "app/ExportDialogState.hpp"
 #include "app/ViewerMode.hpp"
+#include "image/ImageOptimizationSettings.hpp"
 #include "pdf/MetaWriter.hpp"
 #include "pdf/PdfDocument.hpp"
-#include "pdf/PdfExporter.hpp"
 #include "pdf/PdfRenderer.hpp"
 #include "pdf/PdfSelection.hpp"
 #include "render/Camera2D.hpp"
@@ -153,6 +153,8 @@ class Application {
     void DrawExportDialog();
     bool ConfirmExport();
     void ClearSelections();
+    void RotateCCW();
+    void UpdatePageTransform();
     void MoveSelectionTo(const glm::vec2& current_world);
     image::ImageOptimizationSettings BuildImageOptimizationSettings() const;
     glm::vec2 GetEffectiveSelectionPoint(const glm::vec2& world) const;
@@ -189,12 +191,13 @@ class Application {
     glm::vec2 m_MoveStartWorld = glm::vec2(0.0f);
     pdf::PdfSelection m_MoveStartSelection;
 
-    no::pdf::PdfExporter m_PdfExporter;
     pdf::MetaWriter m_MetaWriter;
     ExportDialogState m_ExportDialogState;
     bool m_SetFocusOnExportDialog = false;
     AppConfig m_Config;
     ConfigService m_ConfigService;
+
+    int m_RotationDegrees = 0;  // 0, 90, 180, 270
 };
 
 }  // namespace no::app

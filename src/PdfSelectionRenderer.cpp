@@ -21,7 +21,8 @@ void PdfSelectionRenderer::GetTargetSize(ExportPreset preset, int& out_w, int& o
 }
 
 bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const PdfSelection& selection,
-                                           ExportPreset preset, image::GrayImage& out_image) const {
+                                           ExportPreset preset, int /*rotation_degrees*/,
+                                           image::GrayImage& out_image) const {
     int target_w = 0;
     int target_h = 0;
     GetTargetSize(preset, target_w, target_h);
@@ -72,7 +73,6 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
 
         const fz_irect bbox = fz_make_irect(0, 0, target_w, target_h);
 
-        // IMPORTANT: alpha = 0, so we get exactly 1 byte per pixel in Gray mode.
         pix = fz_new_pixmap_with_bbox(ctx, fz_device_gray(ctx), bbox, nullptr, 0);
         fz_clear_pixmap_with_value(ctx, pix, 255);
 
@@ -82,17 +82,6 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
 
         const unsigned char* src = fz_pixmap_samples(ctx, pix);
         const int stride = fz_pixmap_stride(ctx, pix);
-        const int width = fz_pixmap_width(ctx, pix);
-        const int height = fz_pixmap_height(ctx, pix);
-        const int components = fz_pixmap_components(ctx, pix);
-
-        std::cout << "Selection page=" << selection.PageIndex << " x=" << selection.X << " y=" << selection.Y
-                  << " w=" << selection.Width << " h=" << selection.Height << " | target=" << target_w << "x"
-                  << target_h << " | pix=" << width << "x" << height << " | stride=" << stride
-                  << " | components=" << components << " | scale=" << scale << " | offset=(" << offset_x << ","
-                  << offset_y << ")"
-                  << " | matrix=(" << m.a << "," << m.b << "," << m.c << "," << m.d << "," << m.e << "," << m.f
-                  << ")\n";
 
         for (int y = 0; y < target_h; ++y) {
             std::memcpy(&out_image.Pixels[y * target_w], src + y * stride, target_w);

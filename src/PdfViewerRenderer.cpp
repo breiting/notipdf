@@ -2,6 +2,7 @@
 
 #include <glad/gl.h>
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "render/Camera2D.hpp"
@@ -84,12 +85,15 @@ void PdfViewerRenderer::BeginFrame() const {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void PdfViewerRenderer::Draw(const Camera2D& camera, const PdfQuad& quad, const PdfTexture& texture) const {
+void PdfViewerRenderer::Draw(const Camera2D& camera, const PdfQuad& quad, const PdfTexture& texture,
+                             int rotation_degrees) const {
     if (m_Program == 0 || !texture.IsValid()) {
         return;
     }
 
-    const glm::mat4 model(1.0f);
+    glm::mat4 model(1.0f);
+    model = glm::rotate(model, glm::radians(static_cast<float>(rotation_degrees)), glm::vec3(0.0f, 0.0f, 1.0f));
+
     const glm::mat4 view = camera.GetViewMatrix();
     const glm::mat4 proj = camera.GetProjectionMatrix();
     const glm::mat4 mvp = proj * view * model;

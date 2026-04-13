@@ -53,7 +53,7 @@ class PdfViewerRenderer {
      * \param quad The page quad.
      * \param texture The page texture.
      */
-    void Draw(const Camera2D& camera, const PdfQuad& quad, const PdfTexture& texture) const;
+    void Draw(const Camera2D& camera, const PdfQuad& quad, const PdfTexture& texture, int rotation_degrees) const;
 
     /**
      * \brief Draws a rectangle outline in world space.

@@ -48,6 +48,15 @@ class ViewerMapping {
     bool IsInsidePage(const glm::vec2& world) const;
 
     /**
+     * \brief Sets the current page rotation in degrees.
+     *
+     * Supported values are 0, 90, 180, and 270.
+     *
+     * \param degrees The counter-clockwise rotation angle.
+     */
+    void SetRotationDegrees(int degrees);
+
+    /**
      * \brief Converts two world-space drag points into a page selection.
      *
      * \param page_index The page index.
@@ -67,18 +76,31 @@ class ViewerMapping {
      */
     void SelectionToWorldRect(const pdf::PdfSelection& selection, glm::vec2& out_min, glm::vec2& out_max) const;
 
+    /**
+     * \brief Converts a world-space point to PDF page coordinates.
+     *
+     * \param world The input world-space point.
+     * \return The corresponding page-space point.
+     */
+    glm::vec2 WorldToPage(const glm::vec2& world) const;
+
     float GetPageX0() const;
     float GetPageY0() const;
     float GetPageX1() const;
     float GetPageY1() const;
 
    private:
+    glm::vec2 ApplyInverseRotation(const glm::vec2& point) const;
+    glm::vec2 ApplyForwardRotation(const glm::vec2& point) const;
+
     float m_PageX0 = 0.0f;
     float m_PageY0 = 0.0f;
     float m_PageX1 = 1.0f;
     float m_PageY1 = 1.0f;
     float m_QuadWidth = 1.0f;
     float m_QuadHeight = 1.0f;
+
+    int m_RotationDegrees = 0;
 };
 
 }  // namespace no::render

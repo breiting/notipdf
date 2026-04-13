@@ -23,7 +23,7 @@ class PdfSelectionRenderer {
      * \return True on success.
      */
     bool RenderSelection(const PdfDocument& document, const PdfSelection& selection, ExportPreset preset,
-                         image::GrayImage& out_image) const;
+                         int rotation_degrees, image::GrayImage& out_image) const;
 
    private:
     void GetTargetSize(ExportPreset preset, int& out_w, int& out_h) const;

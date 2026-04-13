@@ -1,5 +1,7 @@
 #include "app/Application.hpp"
 
+#include "pdf/PdfExporter.hpp"
+
 #ifndef GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_NONE
 #endif
@@ -60,11 +62,38 @@ void Application::Shutdown() {
     m_Initialized = false;
 }
 
+void Application::RotateCCW() {
+    m_RotationDegrees += 90;
+    if (m_RotationDegrees >= 360) {
+        m_RotationDegrees = 0;
+    }
+
+    UpdatePageTransform();
+    FitCurrentPageToView();
+}
+
+void Application::UpdatePageTransform() {
+    float base_width = 1.0f;
+    float base_height = 1.0f;
+
+    if (m_RenderedPage.height > 0) {
+        base_width = static_cast<float>(m_RenderedPage.width) / static_cast<float>(m_RenderedPage.height);
+        base_height = 1.0f;
+    }
+
+    // Keep the quad in the native page aspect ratio.
+    // Rotation is applied in the renderer, not by swapping geometry dimensions here.
+    m_PageQuad.SetSize(base_width, base_height);
+
+    m_ViewerMapping.SetQuadSize(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
+    m_ViewerMapping.SetRotationDegrees(m_RotationDegrees);
+}
+
 std::string Application::GetWindowTitle() const {
     std::ostringstream ss;
     ss << "notipdf"
        << " | mode: " << (m_ViewerMode == ViewerMode::Pan ? "PAN" : "SELECT") << " | page: " << (m_CurrentPageIndex + 1)
-       << "/" << m_Document.GetPageCount();
+       << "/" << m_Document.GetPageCount() << " | rot: " << m_RotationDegrees;
     return ss.str();
 }
 
@@ -90,6 +119,10 @@ void Application::OnKey(int key, int action, int /*mods*/) {
 
         case GLFW_KEY_SPACE:
             ToggleViewerMode();
+            break;
+
+        case GLFW_KEY_R:
+            RotateCCW();
             break;
 
         case GLFW_KEY_N:
@@ -251,12 +284,14 @@ bool Application::ConfirmExport() {
 
     const std::filesystem::path output_json = m_Config.OutputDirectory / json_file_name;
 
-    no::pdf::PdfExporter exporter;
+    no::pdf::PdfExporter exporter(m_Config.Backend);
 
     const image::ImageOptimizationSettings optimization_settings = BuildImageOptimizationSettings();
 
-    if (!exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape,
-                         m_ExportDialogState.OptimizeForEInk, optimization_settings)) {
+    bool export_success =
+        exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape, m_RotationDegrees,
+                        m_ExportDialogState.OptimizeForEInk, optimization_settings);
+    if (!export_success) {
         std::cerr << "Export failed.\n";
         return false;
     }
@@ -352,7 +387,14 @@ bool Application::ShouldClose() const {
 }
 
 void Application::FitCurrentPageToView() {
-    m_Camera.FitToContent(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
+    float fit_width = m_PageQuad.GetWidth();
+    float fit_height = m_PageQuad.GetHeight();
+
+    if (m_RotationDegrees == 90 || m_RotationDegrees == 270) {
+        std::swap(fit_width, fit_height);
+    }
+
+    m_Camera.FitToContent(fit_width, fit_height);
 }
 
 void Application::ClearSelections() {
@@ -376,7 +418,7 @@ void Application::Render() {
         return;
     }
 
-    m_ViewerRenderer.Draw(m_Camera, m_PageQuad, m_PageTexture);
+    m_ViewerRenderer.Draw(m_Camera, m_PageQuad, m_PageTexture, m_RotationDegrees);
     DrawSelectionOverlays();
 }
 
@@ -448,23 +490,19 @@ void Application::MoveSelectionTo(const glm::vec2& current_world) {
         return;
     }
 
-    const glm::vec2 world_delta = current_world - m_MoveStartWorld;
+    const glm::vec2 page_start = m_ViewerMapping.WorldToPage(m_MoveStartWorld);
+    const glm::vec2 page_current = m_ViewerMapping.WorldToPage(current_world);
+    const glm::vec2 page_delta = page_current - page_start;
 
     const float page_x0 = m_ViewerMapping.GetPageX0();
     const float page_y0 = m_ViewerMapping.GetPageY0();
     const float page_x1 = m_ViewerMapping.GetPageX1();
     const float page_y1 = m_ViewerMapping.GetPageY1();
 
-    const float page_w = page_x1 - page_x0;
-    const float page_h = page_y1 - page_y0;
-
-    const float quad_w = m_PageQuad.GetWidth();
-    const float quad_h = m_PageQuad.GetHeight();
-
     pdf::PdfSelection moved = m_MoveStartSelection;
 
-    moved.X += world_delta.x * (page_w / quad_w);
-    moved.Y -= world_delta.y * (page_h / quad_h);
+    moved.X += page_delta.x;
+    moved.Y += page_delta.y;
 
     moved.X = std::clamp(moved.X, page_x0, page_x1 - moved.Width);
     moved.Y = std::clamp(moved.Y, page_y0, page_y1 - moved.Height);
@@ -606,11 +644,6 @@ bool Application::LoadPage(int page_index) {
         return false;
     }
 
-    const float aspect = static_cast<float>(m_RenderedPage.width) / static_cast<float>(m_RenderedPage.height);
-
-    m_PageQuad.SetSize(aspect, 1.0f);
-    FitCurrentPageToView();
-
     float page_x0 = 0.0f;
     float page_y0 = 0.0f;
     float page_x1 = 0.0f;
@@ -620,11 +653,14 @@ bool Application::LoadPage(int page_index) {
     }
 
     m_ViewerMapping.SetPageBounds(page_x0, page_y0, page_x1, page_y1);
-    m_ViewerMapping.SetQuadSize(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
+
+    UpdatePageTransform();
+    FitCurrentPageToView();
 
     m_CurrentPageIndex = page_index;
     ClearSelections();
 
     return true;
 }
+
 }  // namespace no::app
