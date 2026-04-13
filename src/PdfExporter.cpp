@@ -116,12 +116,11 @@ bool PdfExporter::Export(const PdfDocument& document, const PdfSelection& select
 
     const std::filesystem::path pgm_path = output_path.parent_path() / (output_path.stem().string() + ".pgm");
 
-    if (!m_Writer.WritePgm(image, pgm_path)) {
-        LOG(Error) << "PdfExporter: WritePgm failed.\n";
-        return false;
-    }
-
-    LOG(Info) << "Debug PGM written to: " << pgm_path;
+    // if (!m_Writer.WritePgm(image, pgm_path)) {
+    //     LOG(Error) << "PdfExporter: WritePgm failed.\n";
+    //     return false;
+    // }
+    // LOG(Info) << "Debug PGM written to: " << pgm_path;
 
     if (!m_Writer.Write(image, output_path, m_Backend)) {
         LOG(Error) << "PdfExporter: PDF write failed.\n";
