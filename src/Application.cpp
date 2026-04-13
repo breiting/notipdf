@@ -16,6 +16,7 @@
 namespace no::app {
 
 bool Application::Initialize(const std::string& pdf_path, int viewport_width, int viewport_height) {
+    m_ConfigService.Load(m_Config);
     if (!m_Document.Open(pdf_path)) {
         return false;
     }
@@ -135,9 +136,9 @@ void Application::OpenExportDialog() {
         m_ExportDialogState.Title = "untitled";
     }
 
-    if (m_ExportDialogState.Author.empty()) {
-        m_ExportDialogState.Author = "";
-    }
+    m_ExportDialogState.OptimizeForEInk = m_Config.DefaultOptimizeForEInk;
+    m_ExportDialogState.ThresholdToBlackAndWhite = m_Config.DefaultThresholdBlackWhite;
+    m_ExportDialogState.VoiceIndex = m_Config.DefaultVoiceIndex;
 }
 
 image::ImageOptimizationSettings Application::BuildImageOptimizationSettings() const {
@@ -239,9 +240,12 @@ bool Application::ConfirmExport() {
     const std::string pdf_file_name = title_slug + "_" + voice_slug + ".pdf";
     const std::string json_file_name = title_slug + "_" + voice_slug + ".json";
 
-    const std::filesystem::path output_pdf = std::filesystem::current_path() / pdf_file_name;
+    std::error_code ec;
+    std::filesystem::create_directories(m_Config.OutputDirectory, ec);
 
-    const std::filesystem::path output_json = std::filesystem::current_path() / json_file_name;
+    const std::filesystem::path output_pdf = m_Config.OutputDirectory / pdf_file_name;
+
+    const std::filesystem::path output_json = m_Config.OutputDirectory / json_file_name;
 
     no::pdf::PdfExporter exporter;
 
@@ -266,6 +270,11 @@ bool Application::ConfirmExport() {
 
     std::cout << "Exported PDF: " << output_pdf << '\n';
     std::cout << "Exported metadata: " << output_json << '\n';
+
+    m_Config.DefaultOptimizeForEInk = m_ExportDialogState.OptimizeForEInk;
+    m_Config.DefaultThresholdBlackWhite = m_ExportDialogState.ThresholdToBlackAndWhite;
+    m_Config.DefaultVoiceIndex = m_ExportDialogState.VoiceIndex;
+    m_ConfigService.Save(m_Config);
 
     ClearSelections();
 

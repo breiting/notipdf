@@ -149,6 +149,7 @@ add_executable(notipdf
     src/ProcessRunner.cpp
     src/MetaWriter.cpp
     src/ImageOptimizer.cpp
+    src/ConfigService.cpp
     src/PdfQuad.cpp
     src/PdfRenderer.cpp
     src/PdfTexture.cpp

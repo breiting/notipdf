@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "app/AppConfig.hpp"
+#include "app/ConfigService.hpp"
 #include "app/ExportDialogState.hpp"
 #include "app/ViewerMode.hpp"
 #include "pdf/MetaWriter.hpp"
@@ -185,6 +187,8 @@ class Application {
     pdf::MetaWriter m_MetaWriter;
     ExportDialogState m_ExportDialogState;
     bool m_SetFocusOnExportDialog = false;
+    AppConfig m_Config;
+    ConfigService m_ConfigService;
 };
 
 }  // namespace no::app
