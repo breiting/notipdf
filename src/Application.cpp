@@ -31,6 +31,9 @@ void Application::DrawUI() {
     ImGui::Begin("Document");
     ImGui::Text("File: %s", input_path_.c_str());
     ImGui::Text("Pages: %d", document_.GetPageCount());
+    ImGui::Text("Loaded: %s", loaded_ ? "true" : "false");
+    ImGui::Text("Rendered size: %d x %d", rendered_page_.width, rendered_page_.height);
+    ImGui::Text("Pixels: %zu", rendered_page_.pixels_rgba.size());
     ImGui::End();
 
     if (loaded_) {

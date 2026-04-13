@@ -43,8 +43,6 @@ void ViewerPanel::Draw(const no::pdf::RenderedPage& page) {
         return;
     }
 
-    ImGui::Begin("PDF");
-
     ImVec2 avail = ImGui::GetContentRegionAvail();
     float img_w = static_cast<float>(page.width);
     float img_h = static_cast<float>(page.height);
@@ -61,8 +59,6 @@ void ViewerPanel::Draw(const no::pdf::RenderedPage& page) {
 
     ImVec2 size(img_w * scale, img_h * scale);
     ImGui::Image(static_cast<ImTextureID>(static_cast<intptr_t>(texture_id_)), size);
-
-    ImGui::End();
 }
 
 }  // namespace no::ui
