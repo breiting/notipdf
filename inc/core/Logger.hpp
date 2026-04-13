@@ -7,20 +7,13 @@
 #include <sstream>
 #include <string>
 
-namespace of::core {
+namespace no::core {
 
 /**
  * @brief Log levels for the application.
  * Used as a bitmask.
  */
-enum class LogLevel : uint16_t {
-    None = 0x00,
-    Info = 0x01,
-    Debug = 0x02,
-    Warn = 0x04,
-    Error = 0x08,
-    All = 0xFF
-};
+enum class LogLevel : uint16_t { None = 0x00, Info = 0x01, Debug = 0x02, Warn = 0x04, Error = 0x08, All = 0xFF };
 
 // Overload bitwise operators for convenient masking
 inline LogLevel operator|(LogLevel lhs, LogLevel rhs) {
@@ -109,10 +102,10 @@ class LogMessage {
     std::ostringstream m_buffer;
 };
 
-}  // namespace of::core
+}  // namespace no::core
 
 /**
  * @brief Macro to start logging.
  * Usage: LOG(Info) << "Message";
  */
-#define LOG(Level) of::core::LogMessage(of::core::LogLevel::Level, #Level)
+#define LOG(Level) no::core::LogMessage(no::core::LogLevel::Level, #Level)

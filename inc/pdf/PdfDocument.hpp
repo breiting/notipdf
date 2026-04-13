@@ -5,7 +5,6 @@
 struct fz_context;
 struct fz_document;
 struct fz_page;
-struct fz_rect;
 
 namespace no::pdf {
 

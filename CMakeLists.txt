@@ -92,10 +92,54 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 # ----------------------------------------------------------
+# Homebrew MuPDF
+# ----------------------------------------------------------
+find_program(BREW_EXECUTABLE brew)
+if(NOT BREW_EXECUTABLE)
+    message(FATAL_ERROR "Homebrew not found. Install Homebrew first.")
+endif()
+
+execute_process(
+    COMMAND ${BREW_EXECUTABLE} --prefix mupdf
+    OUTPUT_VARIABLE MUPDF_PREFIX
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE MUPDF_PREFIX_RESULT
+)
+
+if(NOT MUPDF_PREFIX_RESULT EQUAL 0 OR MUPDF_PREFIX STREQUAL "")
+    message(FATAL_ERROR "MuPDF not found via Homebrew. Run: brew install mupdf")
+endif()
+
+message(STATUS "MuPDF prefix: ${MUPDF_PREFIX}")
+
+find_path(MUPDF_INCLUDE_DIR
+    NAMES mupdf/fitz.h
+    HINTS ${MUPDF_PREFIX}/include
+    REQUIRED
+)
+
+find_library(MUPDF_LIBRARY
+    NAMES mupdf
+    HINTS ${MUPDF_PREFIX}/lib
+    REQUIRED
+)
+
+find_library(MUPDF_THIRD_LIBRARY
+    NAMES mupdf-third
+    HINTS ${MUPDF_PREFIX}/lib
+    REQUIRED
+)
+
+add_library(mupdf_external INTERFACE)
+target_include_directories(mupdf_external INTERFACE ${MUPDF_INCLUDE_DIR})
+target_link_libraries(mupdf_external INTERFACE ${MUPDF_LIBRARY} ${MUPDF_THIRD_LIBRARY})
+
+# ----------------------------------------------------------
 # App
 # ----------------------------------------------------------
 add_executable(notipdf
     src/main.cpp
+    src/Logger.cpp
     src/Application.cpp
     src/PdfDocument.cpp
     src/PdfRenderer.cpp
@@ -120,7 +164,7 @@ target_link_libraries(notipdf
         glad
         imgui
         nlohmann_json::nlohmann_json
-        mupdf
+        mupdf_external
 )
 
 if(APPLE)
