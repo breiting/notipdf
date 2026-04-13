@@ -68,9 +68,9 @@ class PdfTexture {
    private:
     void Reset();
 
-    unsigned int texture_id_;
-    int width_;
-    int height_;
+    unsigned int m_TextureId;
+    int m_Width;
+    int m_Height;
 };
 
 }  // namespace no::render

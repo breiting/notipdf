@@ -16,9 +16,9 @@ class ViewerPanel {
     void Draw(const no::pdf::RenderedPage& page);
 
    private:
-    unsigned int texture_id_ = 0;
-    int texture_width_ = 0;
-    int texture_height_ = 0;
+    unsigned int m_TextureId = 0;
+    int m_TextureWidth = 0;
+    int m_TextureHeight = 0;
 };
 
 }  // namespace no::ui

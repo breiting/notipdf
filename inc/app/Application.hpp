@@ -114,12 +114,12 @@ class Application {
 
     render::PdfTexture m_PageTexture;
     render::PdfQuad m_PageQuad;
-    render::PdfViewerRenderer viewer_renderer_;
-    render::Camera2D camera_;
+    render::PdfViewerRenderer m_ViewerRenderer;
+    render::Camera2D m_Camera;
 
-    int current_page_index_;
-    bool initialized_ = false;
-    bool should_close_ = false;
+    int m_CurrentPageIndex = 0;
+    bool m_Initialized = false;
+    bool m_ShouldClose = false;
 };
 
 }  // namespace no::app

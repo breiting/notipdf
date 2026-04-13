@@ -30,10 +30,10 @@ class PdfDocument {
     fz_document* GetHandle() const;
 
    private:
-    fz_context* context_ = nullptr;
-    fz_document* document_ = nullptr;
-    int page_count_ = 0;
-    std::string path_;
+    fz_context* m_Context = nullptr;
+    fz_document* m_Document = nullptr;
+    int m_PageCount = 0;
+    std::string m_Path;
 };
 
 }  // namespace no::pdf

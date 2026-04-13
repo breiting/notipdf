@@ -56,12 +56,12 @@ class PdfQuad {
    private:
     void UploadVertexData();
 
-    unsigned int vao_;
-    unsigned int vbo_;
-    unsigned int ebo_;
-    float width_;
-    float height_;
-    bool initialized_;
+    unsigned int m_Vao;
+    unsigned int m_Vbo;
+    unsigned int m_Ebo;
+    float m_Width;
+    float m_Height;
+    bool m_Initialized;
 };
 
 }  // namespace no::render

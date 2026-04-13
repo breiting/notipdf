@@ -6,9 +6,9 @@
 namespace no::ui {
 
 ViewerPanel::~ViewerPanel() {
-    if (texture_id_ != 0) {
-        glDeleteTextures(1, &texture_id_);
-        texture_id_ = 0;
+    if (m_TextureId != 0) {
+        glDeleteTextures(1, &m_TextureId);
+        m_TextureId = 0;
     }
 }
 
@@ -17,28 +17,28 @@ bool ViewerPanel::EnsureTexture(const no::pdf::RenderedPage& page) {
         return false;
     }
 
-    if (texture_id_ == 0) {
-        glGenTextures(1, &texture_id_);
-        glBindTexture(GL_TEXTURE_2D, texture_id_);
+    if (m_TextureId == 0) {
+        glGenTextures(1, &m_TextureId);
+        glBindTexture(GL_TEXTURE_2D, m_TextureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     } else {
-        glBindTexture(GL_TEXTURE_2D, texture_id_);
+        glBindTexture(GL_TEXTURE_2D, m_TextureId);
     }
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, page.width, page.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                  page.pixels_rgba.data());
 
-    texture_width_ = page.width;
-    texture_height_ = page.height;
+    m_TextureWidth = page.width;
+    m_TextureHeight = page.height;
     return true;
 }
 
 void ViewerPanel::Draw(const no::pdf::RenderedPage& page) {
-    if (texture_id_ == 0) {
+    if (m_TextureId == 0) {
         ImGui::TextUnformatted("No page texture.");
         return;
     }
@@ -58,7 +58,7 @@ void ViewerPanel::Draw(const no::pdf::RenderedPage& page) {
     }
 
     ImVec2 size(img_w * scale, img_h * scale);
-    ImGui::Image(static_cast<ImTextureID>(static_cast<intptr_t>(texture_id_)), size);
+    ImGui::Image(static_cast<ImTextureID>(static_cast<intptr_t>(m_TextureId)), size);
 }
 
 }  // namespace no::ui

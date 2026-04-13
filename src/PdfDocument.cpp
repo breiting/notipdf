@@ -11,14 +11,14 @@ PdfDocument::~PdfDocument() {
 }
 
 PdfDocument::PdfDocument(PdfDocument&& other) noexcept {
-    context_ = other.context_;
-    document_ = other.document_;
-    page_count_ = other.page_count_;
-    path_ = std::move(other.path_);
+    m_Context = other.m_Context;
+    m_Document = other.m_Document;
+    m_PageCount = other.m_PageCount;
+    m_Path = std::move(other.m_Path);
 
-    other.context_ = nullptr;
-    other.document_ = nullptr;
-    other.page_count_ = 0;
+    other.m_Context = nullptr;
+    other.m_Document = nullptr;
+    other.m_PageCount = 0;
 }
 
 PdfDocument& PdfDocument::operator=(PdfDocument&& other) noexcept {
@@ -28,14 +28,14 @@ PdfDocument& PdfDocument::operator=(PdfDocument&& other) noexcept {
 
     Close();
 
-    context_ = other.context_;
-    document_ = other.document_;
-    page_count_ = other.page_count_;
-    path_ = std::move(other.path_);
+    m_Context = other.m_Context;
+    m_Document = other.m_Document;
+    m_PageCount = other.m_PageCount;
+    m_Path = std::move(other.m_Path);
 
-    other.context_ = nullptr;
-    other.document_ = nullptr;
-    other.page_count_ = 0;
+    other.m_Context = nullptr;
+    other.m_Document = nullptr;
+    other.m_PageCount = 0;
 
     return *this;
 }
@@ -43,18 +43,18 @@ PdfDocument& PdfDocument::operator=(PdfDocument&& other) noexcept {
 bool PdfDocument::Open(const std::string& path) {
     Close();
 
-    context_ = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
-    if (!context_) {
+    m_Context = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
+    if (!m_Context) {
         return false;
     }
 
-    fz_try(context_) {
-        fz_register_document_handlers(context_);
-        document_ = fz_open_document(context_, path.c_str());
-        page_count_ = fz_count_pages(context_, document_);
-        path_ = path;
+    fz_try(m_Context) {
+        fz_register_document_handlers(m_Context);
+        m_Document = fz_open_document(m_Context, path.c_str());
+        m_PageCount = fz_count_pages(m_Context, m_Document);
+        m_Path = path;
     }
-    fz_catch(context_) {
+    fz_catch(m_Context) {
         Close();
         return false;
     }
@@ -63,38 +63,38 @@ bool PdfDocument::Open(const std::string& path) {
 }
 
 void PdfDocument::Close() {
-    if (context_ && document_) {
-        fz_drop_document(context_, document_);
-        document_ = nullptr;
+    if (m_Context && m_Document) {
+        fz_drop_document(m_Context, m_Document);
+        m_Document = nullptr;
     }
 
-    if (context_) {
-        fz_drop_context(context_);
-        context_ = nullptr;
+    if (m_Context) {
+        fz_drop_context(m_Context);
+        m_Context = nullptr;
     }
 
-    page_count_ = 0;
-    path_.clear();
+    m_PageCount = 0;
+    m_Path.clear();
 }
 
 bool PdfDocument::IsOpen() const {
-    return context_ != nullptr && document_ != nullptr;
+    return m_Context != nullptr && m_Document != nullptr;
 }
 
 int PdfDocument::GetPageCount() const {
-    return page_count_;
+    return m_PageCount;
 }
 
 std::string PdfDocument::GetPath() const {
-    return path_;
+    return m_Path;
 }
 
 fz_context* PdfDocument::GetContext() const {
-    return context_;
+    return m_Context;
 }
 
 fz_document* PdfDocument::GetHandle() const {
-    return document_;
+    return m_Document;
 }
 
 }  // namespace no::pdf

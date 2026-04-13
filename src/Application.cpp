@@ -16,11 +16,11 @@ bool Application::Initialize(const std::string& pdf_path, int viewport_width, in
         return false;
     }
 
-    if (!viewer_renderer_.Initialize()) {
+    if (!m_ViewerRenderer.Initialize()) {
         return false;
     }
 
-    if (!page_quad_.Initialize()) {
+    if (!m_PageQuad.Initialize()) {
         return false;
     }
 
@@ -30,13 +30,13 @@ bool Application::Initialize(const std::string& pdf_path, int viewport_width, in
         return false;
     }
 
-    initialized_ = true;
+    m_Initialized = true;
     return true;
 }
 
 void Application::Shutdown() {
     m_Document.Close();
-    initialized_ = false;
+    m_Initialized = false;
 }
 
 void Application::OnKey(int key, int action, int /*mods*/) {
@@ -46,7 +46,7 @@ void Application::OnKey(int key, int action, int /*mods*/) {
 
     switch (key) {
         case GLFW_KEY_ESCAPE:
-            should_close_ = true;
+            m_ShouldClose = true;
             break;
 
         case GLFW_KEY_N:
@@ -69,34 +69,34 @@ void Application::OnKey(int key, int action, int /*mods*/) {
 }
 
 bool Application::ShouldClose() const {
-    return should_close_;
+    return m_ShouldClose;
 }
 
 void Application::FitCurrentPageToView() {
-    camera_.FitToContent(page_quad_.GetWidth(), page_quad_.GetHeight());
+    m_Camera.FitToContent(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
 }
 
 void Application::Update(float dt) {
-    if (!initialized_) {
+    if (!m_Initialized) {
         return;
     }
 
-    camera_.Update(dt);
+    m_Camera.Update(dt);
 }
 
 void Application::Render() {
-    viewer_renderer_.BeginFrame();
+    m_ViewerRenderer.BeginFrame();
 
-    if (!initialized_) {
+    if (!m_Initialized) {
         return;
     }
 
-    viewer_renderer_.Draw(camera_, page_quad_, page_texture_);
+    m_ViewerRenderer.Draw(m_Camera, m_PageQuad, m_PageTexture);
 }
 
 void Application::SetViewportSize(int width, int height) {
-    viewer_renderer_.SetViewportSize(width, height);
-    camera_.SetViewportSize(width, height);
+    m_ViewerRenderer.SetViewportSize(width, height);
+    m_Camera.SetViewportSize(width, height);
 }
 
 void Application::NextPage() {
@@ -104,7 +104,7 @@ void Application::NextPage() {
         return;
     }
 
-    const int next_page = current_page_index_ + 1;
+    const int next_page = m_CurrentPageIndex + 1;
     if (next_page >= m_Document.GetPageCount()) {
         return;
     }
@@ -117,7 +117,7 @@ void Application::PreviousPage() {
         return;
     }
 
-    const int previous_page = current_page_index_ - 1;
+    const int previous_page = m_CurrentPageIndex - 1;
     if (previous_page < 0) {
         return;
     }
@@ -128,36 +128,36 @@ void Application::PreviousPage() {
 void Application::OnMouseButton(int button, int action, int /*mods*/, double mouse_x, double mouse_y) {
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
-            camera_.BeginPan(mouse_x, mouse_y);
+            m_Camera.BeginPan(mouse_x, mouse_y);
         } else if (action == GLFW_RELEASE) {
-            camera_.EndPan();
+            m_Camera.EndPan();
         }
     }
 }
 
 void Application::OnMouseMove(double mouse_x, double mouse_y) {
-    camera_.PanTo(mouse_x, mouse_y);
+    m_Camera.PanTo(mouse_x, mouse_y);
 }
 
 void Application::OnScroll(double /*xoffset*/, double yoffset, double mouse_x, double mouse_y) {
-    camera_.ZoomAt(yoffset, mouse_x, mouse_y);
+    m_Camera.ZoomAt(yoffset, mouse_x, mouse_y);
 }
 
 bool Application::LoadPage(int page_index) {
-    if (!m_PdfRenderer.RenderPage(m_Document, page_index, 2.0f, rendered_page_)) {
+    if (!m_PdfRenderer.RenderPage(m_Document, page_index, 2.0f, m_RenderedPage)) {
         return false;
     }
 
-    if (!page_texture_.UploadRGBA(rendered_page_.width, rendered_page_.height, rendered_page_.pixels_rgba.data())) {
+    if (!m_PageTexture.UploadRGBA(m_RenderedPage.width, m_RenderedPage.height, m_RenderedPage.pixels_rgba.data())) {
         return false;
     }
 
-    const float aspect = static_cast<float>(rendered_page_.width) / static_cast<float>(rendered_page_.height);
+    const float aspect = static_cast<float>(m_RenderedPage.width) / static_cast<float>(m_RenderedPage.height);
 
-    page_quad_.SetSize(aspect, 1.0f);
+    m_PageQuad.SetSize(aspect, 1.0f);
     FitCurrentPageToView();
 
-    current_page_index_ = page_index;
+    m_CurrentPageIndex = page_index;
     return true;
 }
 

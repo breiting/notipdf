@@ -13,37 +13,37 @@ struct Vertex {
 };
 }  // namespace
 
-PdfQuad::PdfQuad() : vao_(0), vbo_(0), ebo_(0), width_(1.0f), height_(1.0f), initialized_(false) {
+PdfQuad::PdfQuad() : m_Vao(0), m_Vbo(0), m_Ebo(0), m_Width(1.0f), m_Height(1.0f), m_Initialized(false) {
 }
 
 PdfQuad::~PdfQuad() {
-    if (ebo_ != 0) {
-        glDeleteBuffers(1, &ebo_);
+    if (m_Ebo != 0) {
+        glDeleteBuffers(1, &m_Ebo);
     }
-    if (vbo_ != 0) {
-        glDeleteBuffers(1, &vbo_);
+    if (m_Vbo != 0) {
+        glDeleteBuffers(1, &m_Vbo);
     }
-    if (vao_ != 0) {
-        glDeleteVertexArrays(1, &vao_);
+    if (m_Vao != 0) {
+        glDeleteVertexArrays(1, &m_Vao);
     }
 }
 
 bool PdfQuad::Initialize() {
-    if (initialized_) {
+    if (m_Initialized) {
         return true;
     }
 
-    glGenVertexArrays(1, &vao_);
-    glGenBuffers(1, &vbo_);
-    glGenBuffers(1, &ebo_);
+    glGenVertexArrays(1, &m_Vao);
+    glGenBuffers(1, &m_Vbo);
+    glGenBuffers(1, &m_Ebo);
 
-    if (vao_ == 0 || vbo_ == 0 || ebo_ == 0) {
+    if (m_Vao == 0 || m_Vbo == 0 || m_Ebo == 0) {
         return false;
     }
 
-    glBindVertexArray(vao_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    glBindVertexArray(m_Vao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_Vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_Ebo);
 
     constexpr unsigned int indices[6] = {0, 1, 2, 2, 3, 0};
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -57,36 +57,36 @@ bool PdfQuad::Initialize() {
     glBindVertexArray(0);
 
     UploadVertexData();
-    initialized_ = true;
+    m_Initialized = true;
     return glGetError() == GL_NO_ERROR;
 }
 
 void PdfQuad::SetSize(float width, float height) {
-    width_ = width;
-    height_ = height;
+    m_Width = width;
+    m_Height = height;
 
-    if (initialized_) {
+    if (m_Initialized) {
         UploadVertexData();
     }
 }
 
 void PdfQuad::Render() const {
-    glBindVertexArray(vao_);
+    glBindVertexArray(m_Vao);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
 }
 
 float PdfQuad::GetWidth() const {
-    return width_;
+    return m_Width;
 }
 
 float PdfQuad::GetHeight() const {
-    return height_;
+    return m_Height;
 }
 
 void PdfQuad::UploadVertexData() {
-    const float hw = width_ * 0.5f;
-    const float hh = height_ * 0.5f;
+    const float hw = m_Width * 0.5f;
+    const float hh = m_Height * 0.5f;
 
     const Vertex vertices[4] = {
         {-hw, -hh, 0.0f, 1.0f},
@@ -95,7 +95,7 @@ void PdfQuad::UploadVertexData() {
         {-hw, hh, 0.0f, 0.0f},
     };
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, m_Vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 }
 

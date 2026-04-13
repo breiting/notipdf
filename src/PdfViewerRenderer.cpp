@@ -39,12 +39,12 @@ void main() {
 )";
 }  // namespace
 
-PdfViewerRenderer::PdfViewerRenderer() : program_(0), u_mvp_(-1), u_texture_(-1), viewport_size_(1600, 1000) {
+PdfViewerRenderer::PdfViewerRenderer() : m_Program(0), m_UMvp(-1), m_UTexture(-1), m_ViewportSize(1600, 1000) {
 }
 
 PdfViewerRenderer::~PdfViewerRenderer() {
-    if (program_ != 0) {
-        glDeleteProgram(program_);
+    if (m_Program != 0) {
+        glDeleteProgram(m_Program);
     }
 }
 
@@ -68,24 +68,24 @@ bool PdfViewerRenderer::Initialize() {
         return false;
     }
 
-    u_mvp_ = glGetUniformLocation(program_, "u_mvp");
-    u_texture_ = glGetUniformLocation(program_, "u_texture0");
-    return u_mvp_ >= 0 && u_texture_ >= 0;
+    m_UMvp = glGetUniformLocation(m_Program, "u_mvp");
+    m_UTexture = glGetUniformLocation(m_Program, "u_texture0");
+    return m_UMvp >= 0 && m_UTexture >= 0;
 }
 
 void PdfViewerRenderer::SetViewportSize(int width, int height) {
-    viewport_size_.x = width;
-    viewport_size_.y = height;
+    m_ViewportSize.x = width;
+    m_ViewportSize.y = height;
 }
 
 void PdfViewerRenderer::BeginFrame() const {
-    glViewport(0, 0, viewport_size_.x, viewport_size_.y);
+    glViewport(0, 0, m_ViewportSize.x, m_ViewportSize.y);
     glClearColor(0.12f, 0.12f, 0.12f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void PdfViewerRenderer::Draw(const Camera2D& camera, const PdfQuad& quad, const PdfTexture& texture) const {
-    if (program_ == 0 || !texture.IsValid()) {
+    if (m_Program == 0 || !texture.IsValid()) {
         return;
     }
 
@@ -94,9 +94,9 @@ void PdfViewerRenderer::Draw(const Camera2D& camera, const PdfQuad& quad, const 
     const glm::mat4 proj = camera.GetProjectionMatrix();
     const glm::mat4 mvp = proj * view * model;
 
-    glUseProgram(program_);
-    glUniformMatrix4fv(u_mvp_, 1, GL_FALSE, glm::value_ptr(mvp));
-    glUniform1i(u_texture_, 0);
+    glUseProgram(m_Program);
+    glUniformMatrix4fv(m_UMvp, 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniform1i(m_UTexture, 0);
 
     texture.Bind(0);
     quad.Render();
@@ -120,16 +120,16 @@ unsigned int PdfViewerRenderer::CompileShader(unsigned int type, const char* sou
 }
 
 bool PdfViewerRenderer::LinkProgram(unsigned int vertex_shader, unsigned int fragment_shader) {
-    program_ = glCreateProgram();
-    glAttachShader(program_, vertex_shader);
-    glAttachShader(program_, fragment_shader);
-    glLinkProgram(program_);
+    m_Program = glCreateProgram();
+    glAttachShader(m_Program, vertex_shader);
+    glAttachShader(m_Program, fragment_shader);
+    glLinkProgram(m_Program);
 
     int success = 0;
-    glGetProgramiv(program_, GL_LINK_STATUS, &success);
+    glGetProgramiv(m_Program, GL_LINK_STATUS, &success);
     if (success == GL_FALSE) {
-        glDeleteProgram(program_);
-        program_ = 0;
+        glDeleteProgram(m_Program);
+        m_Program = 0;
         return false;
     }
 

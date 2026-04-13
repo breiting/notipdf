@@ -59,10 +59,10 @@ class PdfViewerRenderer {
     unsigned int CompileShader(unsigned int type, const char* source) const;
     bool LinkProgram(unsigned int vertex_shader, unsigned int fragment_shader);
 
-    unsigned int program_;
-    int u_mvp_;
-    int u_texture_;
-    glm::ivec2 viewport_size_;
+    unsigned int m_Program;
+    int m_UMvp;
+    int m_UTexture;
+    glm::ivec2 m_ViewportSize;
 };
 
 }  // namespace no::render

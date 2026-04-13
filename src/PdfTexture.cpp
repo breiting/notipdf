@@ -4,7 +4,7 @@
 
 namespace no::render {
 
-PdfTexture::PdfTexture() : texture_id_(0), width_(0), height_(0) {
+PdfTexture::PdfTexture() : m_TextureId(0), m_Width(0), m_Height(0) {
 }
 
 PdfTexture::~PdfTexture() {
@@ -12,10 +12,10 @@ PdfTexture::~PdfTexture() {
 }
 
 PdfTexture::PdfTexture(PdfTexture&& other) noexcept
-    : texture_id_(other.texture_id_), width_(other.width_), height_(other.height_) {
-    other.texture_id_ = 0;
-    other.width_ = 0;
-    other.height_ = 0;
+    : m_TextureId(other.m_TextureId), m_Width(other.m_Width), m_Height(other.m_Height) {
+    other.m_TextureId = 0;
+    other.m_Width = 0;
+    other.m_Height = 0;
 }
 
 PdfTexture& PdfTexture::operator=(PdfTexture&& other) noexcept {
@@ -25,13 +25,13 @@ PdfTexture& PdfTexture::operator=(PdfTexture&& other) noexcept {
 
     Reset();
 
-    texture_id_ = other.texture_id_;
-    width_ = other.width_;
-    height_ = other.height_;
+    m_TextureId = other.m_TextureId;
+    m_Width = other.m_Width;
+    m_Height = other.m_Height;
 
-    other.texture_id_ = 0;
-    other.width_ = 0;
-    other.height_ = 0;
+    other.m_TextureId = 0;
+    other.m_Width = 0;
+    other.m_Height = 0;
 
     return *this;
 }
@@ -41,11 +41,11 @@ bool PdfTexture::UploadRGBA(int width, int height, const std::uint8_t* pixels) {
         return false;
     }
 
-    if (texture_id_ == 0) {
-        glGenTextures(1, &texture_id_);
+    if (m_TextureId == 0) {
+        glGenTextures(1, &m_TextureId);
     }
 
-    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glBindTexture(GL_TEXTURE_2D, m_TextureId);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -57,40 +57,40 @@ bool PdfTexture::UploadRGBA(int width, int height, const std::uint8_t* pixels) {
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    width_ = width;
-    height_ = height;
+    m_Width = width;
+    m_Height = height;
     return glGetError() == GL_NO_ERROR;
 }
 
 void PdfTexture::Bind(unsigned int unit) const {
     glActiveTexture(GL_TEXTURE0 + unit);
-    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glBindTexture(GL_TEXTURE_2D, m_TextureId);
 }
 
 unsigned int PdfTexture::GetId() const {
-    return texture_id_;
+    return m_TextureId;
 }
 
 int PdfTexture::GetWidth() const {
-    return width_;
+    return m_Width;
 }
 
 int PdfTexture::GetHeight() const {
-    return height_;
+    return m_Height;
 }
 
 bool PdfTexture::IsValid() const {
-    return texture_id_ != 0;
+    return m_TextureId != 0;
 }
 
 void PdfTexture::Reset() {
-    if (texture_id_ != 0) {
-        glDeleteTextures(1, &texture_id_);
-        texture_id_ = 0;
+    if (m_TextureId != 0) {
+        glDeleteTextures(1, &m_TextureId);
+        m_TextureId = 0;
     }
 
-    width_ = 0;
-    height_ = 0;
+    m_Width = 0;
+    m_Height = 0;
 }
 
 }  // namespace no::render

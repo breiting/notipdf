@@ -118,15 +118,15 @@ class Camera2D {
     float GetTargetViewWidth() const;
     float GetTargetViewHeight() const;
 
-    glm::ivec2 viewport_size_;
-    glm::vec2 position_;
-    glm::vec2 target_position_;
+    glm::ivec2 m_ViewportSize;
+    glm::vec2 m_Position;
+    glm::vec2 m_TargetPosition;
 
-    float view_height_;
-    float target_view_height_;
+    float m_ViewHeight;
+    float m_TargetViewHeight;
 
-    bool is_panning_;
-    glm::dvec2 last_pan_mouse_;
+    bool m_IsPanning;
+    glm::dvec2 m_LastPanMouse;
 };
 
 }  // namespace no::render
