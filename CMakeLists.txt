@@ -22,6 +22,16 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(CLI11)
 
 # ----------------------------------------------------------
+# GLM
+# ----------------------------------------------------------
+FetchContent_Declare(
+		glm
+		GIT_REPOSITORY https://github.com/g-truc/glm.git
+		GIT_TAG 1.0.1
+)
+FetchContent_MakeAvailable(glm)
+
+# ----------------------------------------------------------
 # GLFW
 # ----------------------------------------------------------
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -43,30 +53,33 @@ add_library(glad STATIC extern/glad/src/gl.cpp)
 target_include_directories(glad PUBLIC extern/glad/include)
 
 # ----------------------------------------------------------
+# Google Test
+# ----------------------------------------------------------
+FetchContent_Declare(
+		googletest
+		URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+		DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(googletest)
+
+# ----------------------------------------------------------
 # ImGui
 # ----------------------------------------------------------
 FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG docking
+	imgui
+	GIT_REPOSITORY https://github.com/ocornut/imgui.git
+	GIT_TAG docking
 )
 FetchContent_MakeAvailable(imgui)
 
 add_library(imgui STATIC
-    ${imgui_SOURCE_DIR}/imgui.cpp
-    ${imgui_SOURCE_DIR}/imgui_draw.cpp
-    ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-    ${imgui_SOURCE_DIR}/imgui_demo.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+	${imgui_SOURCE_DIR}/imgui.cpp
+	${imgui_SOURCE_DIR}/imgui_draw.cpp
+	${imgui_SOURCE_DIR}/imgui_tables.cpp
+	${imgui_SOURCE_DIR}/imgui_widgets.cpp
+	${imgui_SOURCE_DIR}/imgui_demo.cpp
 )
-target_include_directories(imgui
-    PUBLIC
-        ${imgui_SOURCE_DIR}
-        ${imgui_SOURCE_DIR}/backends
-)
-target_link_libraries(imgui PUBLIC glfw)
+target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
 
 # ----------------------------------------------------------
 # nlohmann/json
@@ -79,29 +92,25 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 # ----------------------------------------------------------
-# MuPDF via CMake wrapper
-# ----------------------------------------------------------
-FetchContent_Declare(
-    mupdf_cmake
-    GIT_REPOSITORY https://github.com/FabriceSalvaire/mupdf-cmake.git
-    GIT_TAG cmake
-)
-FetchContent_MakeAvailable(mupdf_cmake)
-
-# ----------------------------------------------------------
 # App
 # ----------------------------------------------------------
 add_executable(notipdf
     src/main.cpp
-    src/app/Application.cpp
-    src/pdf/PdfDocument.cpp
-    src/pdf/PdfRenderer.cpp
-    src/ui/ViewerPanel.cpp
+    src/Application.cpp
+    src/PdfDocument.cpp
+    src/PdfRenderer.cpp
+    src/ViewerPanel.cpp
+    src/Window.cpp
+	${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+	${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    ${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
 )
 
 target_include_directories(notipdf
     PRIVATE
         inc
+        ${imgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}/backends
 )
 
 target_link_libraries(notipdf

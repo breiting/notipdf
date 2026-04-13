@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 #include "pdf/PdfRenderer.hpp"
 
 namespace no::ui {
