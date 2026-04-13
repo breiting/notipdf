@@ -15,6 +15,7 @@ bool PdfExporter::Export(const PdfDocument& document, const PdfSelection& select
     }
 
     const std::filesystem::path pgm_path = output_path.parent_path() / (output_path.stem().string() + ".pgm");
+
     if (!m_Writer.WritePgm(image, pgm_path)) {
         std::cerr << "PdfExporter: WritePgm failed.\n";
         return false;

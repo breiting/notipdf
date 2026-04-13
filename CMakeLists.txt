@@ -50,7 +50,7 @@ FetchContent_MakeAvailable(glfw)
 # GLAD
 # ----------------------------------------------------------
 add_library(glad STATIC extern/glad/src/gl.cpp)
-target_include_directories(glad PUBLIC extern/glad/include)
+target_include_directories(glad PUBLIC extern/glad/include extern/stb)
 
 # ----------------------------------------------------------
 # Google Test
