@@ -14,6 +14,13 @@ namespace {
 no::app::Application* g_app = nullptr;
 no::ui::Window* g_window = nullptr;
 
+void WindowSizeCallback(GLFWwindow* native, int width, int height) {
+    (void)native;
+    if (g_app != nullptr) {
+        g_app->SetInputViewportSize(width, height);
+    }
+}
+
 void KeyCallback(GLFWwindow* native, int key, int scancode, int action, int mods) {
     ImGui_ImplGlfw_KeyCallback(native, key, scancode, action, mods);
 
@@ -100,8 +107,8 @@ int main(int argc, char** argv) {
     no::ui::Window window;
 
     no::ui::Window::CreateInfo ci;
-    ci.width = 1600;
-    ci.height = 1000;
+    ci.width = 1200;
+    ci.height = 880;
     ci.title = "notipdf";
 
     if (!window.Create(ci)) {
@@ -109,16 +116,26 @@ int main(int argc, char** argv) {
     }
 
     no::app::Application app;
-    if (!app.Initialize(input_pdf, ci.width, ci.height)) {
+    int framebuffer_w = 0;
+    int framebuffer_h = 0;
+    glfwGetFramebufferSize(window.GetNative(), &framebuffer_w, &framebuffer_h);
+
+    if (!app.Initialize(input_pdf, framebuffer_w, framebuffer_h)) {
         window.Destroy();
         return 1;
     }
+
+    int window_w = 0;
+    int window_h = 0;
+    glfwGetWindowSize(window.GetNative(), &window_w, &window_h);
+    app.SetInputViewportSize(window_w, window_h);
 
     g_app = &app;
     g_window = &window;
 
     GLFWwindow* native = window.GetNative();
     glfwSetKeyCallback(native, KeyCallback);
+    glfwSetWindowSizeCallback(native, WindowSizeCallback);
     glfwSetMouseButtonCallback(native, MouseButtonCallback);
     glfwSetCursorPosCallback(native, CursorPosCallback);
     glfwSetScrollCallback(native, ScrollCallback);

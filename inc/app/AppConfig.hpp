@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "app/LibraryCatalog.hpp"
 #include "pdf/PdfBackend.hpp"
 
 namespace no::app {
@@ -15,7 +16,9 @@ struct AppConfig {
     bool DefaultOptimizeForEInk = true;
     bool DefaultThresholdBlackWhite = false;
 
-    int DefaultVoiceIndex = 0;
+    BookId DefaultBook = BookId::Marschbuch;
+    PartId DefaultPart = PartId::Trompete1;
+
     pdf::PdfBackend Backend = pdf::PdfBackend::Sips;
 };
 

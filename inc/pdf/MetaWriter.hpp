@@ -7,18 +7,18 @@
 namespace no::pdf {
 
 /**
- * \brief Writes metadata files for exported PDF selections.
+ * \brief Writes and updates piece-level metadata files.
  */
 class MetaWriter {
    public:
     /**
-     * \brief Writes a meta.json file to disk.
+     * \brief Adds or updates one exported part inside a piece-level meta.json.
      *
-     * \param meta_data The metadata to write.
-     * \param output_path The destination json path.
+     * \param meta_data The piece and part metadata.
+     * \param output_path The destination meta.json path.
      * \return True on success, false otherwise.
      */
-    bool Write(const MetaData& meta_data, const std::filesystem::path& output_path) const;
+    bool WriteOrUpdate(const MetaData& meta_data, const std::filesystem::path& output_path) const;
 };
 
 }  // namespace no::pdf

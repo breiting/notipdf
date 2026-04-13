@@ -114,6 +114,7 @@ class Application {
      * \param height The new height.
      */
     void SetViewportSize(int width, int height);
+    void SetInputViewportSize(int width, int height);
 
     /**
      * \brief Handles mouse button input.
@@ -158,6 +159,9 @@ class Application {
     void MoveSelectionTo(const glm::vec2& current_world);
     image::ImageOptimizationSettings BuildImageOptimizationSettings() const;
     glm::vec2 GetEffectiveSelectionPoint(const glm::vec2& world) const;
+
+    static std::string MakePieceDirectoryName(int piece_number, const std::string& piece_id);
+    static std::string MakeThreeDigitNumber(int value);
 
     static std::string SanitizeFileName(const std::string& value);
     static const char* GetVoiceName(int index);

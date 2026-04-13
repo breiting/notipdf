@@ -53,8 +53,12 @@ bool ConfigService::Load(AppConfig& output_config) const {
         output_config.DefaultThresholdBlackWhite = json["default_threshold_black_white"].get<bool>();
     }
 
-    if (json.contains("default_voice")) {
-        output_config.DefaultVoiceIndex = json["default_voice"].get<int>();
+    if (json.contains("default_book")) {
+        output_config.DefaultBook = static_cast<BookId>(json["default_book"].get<int>());
+    }
+
+    if (json.contains("default_part")) {
+        output_config.DefaultPart = static_cast<PartId>(json["default_part"].get<int>());
     }
 
     if (json.contains("pdf_backend")) {
@@ -88,7 +92,9 @@ bool ConfigService::Save(const AppConfig& config) const {
     json["output_directory"] = config.OutputDirectory.string();
     json["default_optimize_for_eink"] = config.DefaultOptimizeForEInk;
     json["default_threshold_black_white"] = config.DefaultThresholdBlackWhite;
-    json["default_voice"] = config.DefaultVoiceIndex;
+    json["default_book"] = static_cast<int>(config.DefaultBook);
+    json["default_part"] = static_cast<int>(config.DefaultPart);
+    json["pdf_backend"] = (config.Backend == no::pdf::PdfBackend::Magick) ? "magick" : "sips";
 
     file << json.dump(4);
     return file.good();

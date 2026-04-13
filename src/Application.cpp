@@ -117,7 +117,7 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             m_ShouldClose = true;
             break;
 
-        case GLFW_KEY_SPACE:
+        case GLFW_KEY_Q:
             ToggleViewerMode();
             break;
 
@@ -173,9 +173,14 @@ void Application::OpenExportDialog() {
         m_ExportDialogState.Title = "untitled";
     }
 
+    m_ExportDialogState.Book = m_Config.DefaultBook;
+    m_ExportDialogState.Part = m_Config.DefaultPart;
     m_ExportDialogState.OptimizeForEInk = m_Config.DefaultOptimizeForEInk;
     m_ExportDialogState.ThresholdToBlackAndWhite = m_Config.DefaultThresholdBlackWhite;
-    m_ExportDialogState.VoiceIndex = m_Config.DefaultVoiceIndex;
+
+    if (m_ExportDialogState.PieceNumber <= 0) {
+        m_ExportDialogState.PieceNumber = 1;
+    }
 }
 
 image::ImageOptimizationSettings Application::BuildImageOptimizationSettings() const {
@@ -201,50 +206,47 @@ void Application::DrawExportDialog() {
 
     if (ImGui::BeginPopupModal("Export Selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         char title_buffer[256];
-        char author_buffer[256];
-
         std::snprintf(title_buffer, sizeof(title_buffer), "%s", m_ExportDialogState.Title.c_str());
-        std::snprintf(author_buffer, sizeof(author_buffer), "%s", m_ExportDialogState.Author.c_str());
+
+        const char* book_items[] = {"Marschbuch",    "Kirchenbuch", "Mareiner Blech", "Quartett",
+                                    "Brassensemble", "Duette",      "Lieder",         "Andere"};
+
+        int book_index = static_cast<int>(m_ExportDialogState.Book);
+        ImGui::Combo("Buch", &book_index, book_items, IM_ARRAYSIZE(book_items));
+        m_ExportDialogState.Book = static_cast<BookId>(book_index);
+
+        ImGui::InputInt("Stuecknummer", &m_ExportDialogState.PieceNumber);
+        if (m_ExportDialogState.PieceNumber < 1) {
+            m_ExportDialogState.PieceNumber = 1;
+        }
 
         if (m_SetFocusOnExportDialog) {
             ImGui::SetKeyboardFocusHere();
             m_SetFocusOnExportDialog = false;
         }
 
-        if (ImGui::InputText("Title", title_buffer, sizeof(title_buffer))) {
+        if (ImGui::InputText("Titel", title_buffer, sizeof(title_buffer), ImGuiInputTextFlags_AutoSelectAll)) {
             m_ExportDialogState.Title = title_buffer;
         }
 
-        if (ImGui::InputText("Author", author_buffer, sizeof(author_buffer))) {
-            m_ExportDialogState.Author = author_buffer;
-        }
+        const char* part_items[] = {"1. Trompete",    "2. Trompete", "1. Fluegelhorn",
+                                    "2. Fluegelhorn", "Gesang",      "Andere"};
 
-        ImGui::TextUnformatted("Stimme");
+        int part_index = static_cast<int>(m_ExportDialogState.Part);
+        ImGui::Combo("Stimme", &part_index, part_items, IM_ARRAYSIZE(part_items));
+        m_ExportDialogState.Part = static_cast<PartId>(part_index);
 
-        int voice_index = m_ExportDialogState.VoiceIndex;
-        if (ImGui::RadioButton("Trompete 1", voice_index == 0)) {
-            voice_index = 0;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Trompete 2", voice_index == 1)) {
-            voice_index = 1;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Fluegelhorn 1", voice_index == 2)) {
-            voice_index = 2;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Fluegelhorn 2", voice_index == 3)) {
-            voice_index = 3;
-        }
         ImGui::Separator();
-
         ImGui::Checkbox("Optimize for E-Ink", &m_ExportDialogState.OptimizeForEInk);
         ImGui::Checkbox("Threshold to black/white", &m_ExportDialogState.ThresholdToBlackAndWhite);
 
-        m_ExportDialogState.VoiceIndex = voice_index;
+        const std::string piece_id = SanitizeFileName(m_ExportDialogState.Title);
+        const std::string piece_dir = MakePieceDirectoryName(m_ExportDialogState.PieceNumber, piece_id);
+        const std::string pdf_preview = std::string(GetPartKey(m_ExportDialogState.Part)) + ".pdf";
 
         ImGui::Separator();
+        ImGui::Text("Ordner: %s/%s", GetBookKey(m_ExportDialogState.Book), piece_dir.c_str());
+        ImGui::Text("PDF: %s", pdf_preview.c_str());
 
         if (ImGui::Button("Cancel", ImVec2(120.0f, 0.0f))) {
             m_ExportDialogState.IsOpen = false;
@@ -271,52 +273,60 @@ bool Application::ConfirmExport() {
 
     const pdf::PdfSelection& selection = *m_Selection;
 
-    const std::string title_slug = SanitizeFileName(m_ExportDialogState.Title);
-    const std::string voice_slug = SanitizeFileName(GetVoiceName(m_ExportDialogState.VoiceIndex));
+    const std::string piece_id = SanitizeFileName(m_ExportDialogState.Title);
+    const std::string piece_dir_name = MakePieceDirectoryName(m_ExportDialogState.PieceNumber, piece_id);
 
-    const std::string pdf_file_name = title_slug + "_" + voice_slug + ".pdf";
-    const std::string json_file_name = title_slug + "_" + voice_slug + ".json";
+    const std::string part_id = GetPartKey(m_ExportDialogState.Part);
+    const std::string part_title = GetPartTitle(m_ExportDialogState.Part);
+    const std::string pdf_file_name = part_id + std::string(".pdf");
+
+    const std::filesystem::path piece_directory =
+        m_Config.OutputDirectory / GetBookKey(m_ExportDialogState.Book) / piece_dir_name;
 
     std::error_code ec;
-    std::filesystem::create_directories(m_Config.OutputDirectory, ec);
+    std::filesystem::create_directories(piece_directory, ec);
 
-    const std::filesystem::path output_pdf = m_Config.OutputDirectory / pdf_file_name;
-
-    const std::filesystem::path output_json = m_Config.OutputDirectory / json_file_name;
-
-    no::pdf::PdfExporter exporter(m_Config.Backend);
+    const std::filesystem::path output_pdf = piece_directory / pdf_file_name;
+    const std::filesystem::path output_json = piece_directory / "meta.json";
 
     const image::ImageOptimizationSettings optimization_settings = BuildImageOptimizationSettings();
 
-    bool export_success =
+    no::pdf::PdfExporter exporter(m_Config.Backend);
+
+    const bool export_success =
         exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape, m_RotationDegrees,
                         m_ExportDialogState.OptimizeForEInk, optimization_settings);
+
     if (!export_success) {
-        LOG(Error) << "Export failed.\n";
+        std::cerr << "Export failed.\n";
         return false;
     }
 
     pdf::MetaData meta_data;
-    meta_data.Title = m_ExportDialogState.Title;
-    meta_data.Author = m_ExportDialogState.Author;
-    meta_data.Voice = GetVoiceName(m_ExportDialogState.VoiceIndex);
+    meta_data.BookId = GetBookKey(m_ExportDialogState.Book);
+    meta_data.BookTitle = GetBookTitle(m_ExportDialogState.Book);
+    meta_data.PieceNumber = m_ExportDialogState.PieceNumber;
+    meta_data.PieceId = piece_id;
+    meta_data.PieceTitle = m_ExportDialogState.Title;
+    meta_data.PartId = part_id;
+    meta_data.PartTitle = part_title;
     meta_data.PdfFileName = pdf_file_name;
 
-    if (!m_MetaWriter.Write(meta_data, output_json)) {
-        LOG(Error) << "Writing meta.json failed.\n";
+    if (!m_MetaWriter.WriteOrUpdate(meta_data, output_json)) {
+        std::cerr << "Writing meta.json failed.\n";
         return false;
     }
 
-    LOG(Info) << "Exported PDF: " << output_pdf;
-    LOG(Info) << "Exported metadata: " << output_json;
-
+    m_Config.DefaultBook = m_ExportDialogState.Book;
+    m_Config.DefaultPart = m_ExportDialogState.Part;
     m_Config.DefaultOptimizeForEInk = m_ExportDialogState.OptimizeForEInk;
     m_Config.DefaultThresholdBlackWhite = m_ExportDialogState.ThresholdToBlackAndWhite;
-    m_Config.DefaultVoiceIndex = m_ExportDialogState.VoiceIndex;
     m_ConfigService.Save(m_Config);
 
-    ClearSelections();
+    std::cout << "Exported PDF: " << output_pdf << '\n';
+    std::cout << "Updated metadata: " << output_json << '\n';
 
+    ClearSelections();
     return true;
 }
 
@@ -446,9 +456,13 @@ void Application::DrawSelectionOverlays() const {
     }
 }
 
+void Application::SetInputViewportSize(int width, int height) {
+    m_Camera.SetInputViewportSize(width, height);
+}
+
 void Application::SetViewportSize(int width, int height) {
     m_ViewerRenderer.SetViewportSize(width, height);
-    m_Camera.SetViewportSize(width, height);
+    m_Camera.SetRenderViewportSize(width, height);
 }
 
 void Application::NextPage() {
@@ -661,6 +675,16 @@ bool Application::LoadPage(int page_index) {
     ClearSelections();
 
     return true;
+}
+
+std::string Application::MakeThreeDigitNumber(int value) {
+    std::ostringstream ss;
+    ss << std::setw(3) << std::setfill('0') << value;
+    return ss.str();
+}
+
+std::string Application::MakePieceDirectoryName(int piece_number, const std::string& piece_id) {
+    return MakeThreeDigitNumber(piece_number) + "_" + piece_id;
 }
 
 }  // namespace no::app

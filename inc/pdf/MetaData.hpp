@@ -5,12 +5,18 @@
 namespace no::pdf {
 
 /**
- * \brief Describes metadata written alongside an exported PDF.
+ * \brief Describes piece-level metadata written alongside exported PDFs.
  */
 struct MetaData {
-    std::string Title;
-    std::string Author;
-    std::string Voice;
+    std::string BookId;
+    std::string BookTitle;
+
+    int PieceNumber = 0;
+    std::string PieceId;
+    std::string PieceTitle;
+
+    std::string PartId;
+    std::string PartTitle;
     std::string PdfFileName;
 };
 

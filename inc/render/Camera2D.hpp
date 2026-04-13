@@ -21,11 +21,13 @@ class Camera2D {
     /**
      * \brief Sets the viewport size in pixels.
      *
+     * We need to split because of Retina displays
+     *
      * \param width The viewport width in pixels.
      * \param height The viewport height in pixels.
      */
-    void SetViewportSize(int width, int height);
-
+    void SetRenderViewportSize(int width, int height);
+    void SetInputViewportSize(int width, int height);
     /**
      * \brief Updates the camera interpolation state.
      *
@@ -97,11 +99,6 @@ class Camera2D {
     glm::mat4 GetProjectionMatrix() const;
 
     /**
-     * \brief Returns the current viewport size.
-     */
-    glm::ivec2 GetViewportSize() const;
-
-    /**
      * \brief Returns the current camera position.
      */
     glm::vec2 GetPosition() const;
@@ -118,7 +115,9 @@ class Camera2D {
     float GetTargetViewWidth() const;
     float GetTargetViewHeight() const;
 
-    glm::ivec2 m_ViewportSize;
+    glm::ivec2 m_RenderViewportSize;
+    glm::ivec2 m_InputViewportSize;
+
     glm::vec2 m_Position;
     glm::vec2 m_TargetPosition;
 

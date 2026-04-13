@@ -15,7 +15,8 @@ constexpr float kFitMargin = 1.02f;
 }  // namespace
 
 Camera2D::Camera2D()
-    : m_ViewportSize(1600, 1000),
+    : m_RenderViewportSize(1600, 1000),
+      m_InputViewportSize(1600, 1000),
       m_Position(0.0f, 0.0f),
       m_TargetPosition(0.0f, 0.0f),
       m_ViewHeight(1.2f),
@@ -24,9 +25,14 @@ Camera2D::Camera2D()
       m_LastPanMouse(0.0, 0.0) {
 }
 
-void Camera2D::SetViewportSize(int width, int height) {
-    m_ViewportSize.x = std::max(1, width);
-    m_ViewportSize.y = std::max(1, height);
+void Camera2D::SetRenderViewportSize(int width, int height) {
+    m_RenderViewportSize.x = std::max(1, width);
+    m_RenderViewportSize.y = std::max(1, height);
+}
+
+void Camera2D::SetInputViewportSize(int width, int height) {
+    m_InputViewportSize.x = std::max(1, width);
+    m_InputViewportSize.y = std::max(1, height);
 }
 
 void Camera2D::Update(float dt) {
@@ -65,8 +71,8 @@ void Camera2D::PanTo(double screen_x, double screen_y) {
     const glm::dvec2 delta = current - m_LastPanMouse;
     m_LastPanMouse = current;
 
-    const float world_per_pixel_y = GetTargetViewHeight() / static_cast<float>(m_ViewportSize.y);
-    const float world_per_pixel_x = GetTargetViewWidth() / static_cast<float>(m_ViewportSize.x);
+    const float world_per_pixel_y = GetTargetViewHeight() / static_cast<float>(m_InputViewportSize.y);
+    const float world_per_pixel_x = GetTargetViewWidth() / static_cast<float>(m_InputViewportSize.x);
 
     m_TargetPosition.x -= static_cast<float>(delta.x) * world_per_pixel_x;
     m_TargetPosition.y += static_cast<float>(delta.y) * world_per_pixel_y;
@@ -91,8 +97,8 @@ void Camera2D::ZoomAt(double scroll_delta, double screen_x, double screen_y) {
 }
 
 glm::vec2 Camera2D::ScreenToWorld(double screen_x, double screen_y) const {
-    const float ndc_x = (2.0f * static_cast<float>(screen_x) / static_cast<float>(m_ViewportSize.x)) - 1.0f;
-    const float ndc_y = 1.0f - (2.0f * static_cast<float>(screen_y) / static_cast<float>(m_ViewportSize.y));
+    const float ndc_x = (2.0f * static_cast<float>(screen_x) / static_cast<float>(m_InputViewportSize.x)) - 1.0f;
+    const float ndc_y = 1.0f - (2.0f * static_cast<float>(screen_y) / static_cast<float>(m_InputViewportSize.y));
 
     const float half_w = GetTargetViewWidth() * 0.5f;
     const float half_h = GetTargetViewHeight() * 0.5f;
@@ -111,10 +117,6 @@ glm::mat4 Camera2D::GetProjectionMatrix() const {
     return glm::ortho(-half_w, half_w, -half_h, half_h, -1.0f, 1.0f);
 }
 
-glm::ivec2 Camera2D::GetViewportSize() const {
-    return m_ViewportSize;
-}
-
 glm::vec2 Camera2D::GetPosition() const {
     return m_Position;
 }
@@ -124,7 +126,7 @@ float Camera2D::GetViewHeight() const {
 }
 
 float Camera2D::GetAspectRatio() const {
-    return static_cast<float>(m_ViewportSize.x) / static_cast<float>(m_ViewportSize.y);
+    return static_cast<float>(m_RenderViewportSize.x) / static_cast<float>(m_RenderViewportSize.y);
 }
 
 float Camera2D::GetCurrentViewWidth() const {

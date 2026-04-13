@@ -1,6 +1,9 @@
+
 #pragma once
 
 #include <string>
+
+#include "app/LibraryCatalog.hpp"
 
 namespace no::app {
 
@@ -10,10 +13,11 @@ namespace no::app {
 struct ExportDialogState {
     bool IsOpen = false;
 
+    BookId Book = BookId::Marschbuch;
+    int PieceNumber = 1;
     std::string Title;
-    std::string Author;
 
-    int VoiceIndex = 0;
+    PartId Part = PartId::Trompete1;
 
     bool OptimizeForEInk = true;
     bool ThresholdToBlackAndWhite = false;
