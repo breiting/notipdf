@@ -140,12 +140,14 @@ target_link_libraries(mupdf_external INTERFACE ${MUPDF_LIBRARY} ${MUPDF_THIRD_LI
 add_executable(notipdf
     src/Application.cpp
     src/Camera2D.cpp
+    src/LineRenderer.cpp
     src/Logger.cpp
     src/PdfDocument.cpp
     src/PdfQuad.cpp
     src/PdfRenderer.cpp
     src/PdfTexture.cpp
     src/PdfViewerRenderer.cpp
+    src/ViewerMapping.cpp
     src/ViewerPanel.cpp
     src/Window.cpp
     src/main.cpp

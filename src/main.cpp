@@ -102,6 +102,7 @@ int main(int argc, char** argv) {
         app.Update(dt);
         app.Render();
 
+        glfwSetWindowTitle(native, app.GetWindowTitle().c_str());
         window.SwapBuffers();
     }
 

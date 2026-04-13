@@ -55,6 +55,15 @@ class PdfViewerRenderer {
      */
     void Draw(const Camera2D& camera, const PdfQuad& quad, const PdfTexture& texture) const;
 
+    /**
+     * \brief Draws a rectangle outline in world space.
+     *
+     * \param camera The active camera.
+     * \param min_corner The minimum world corner.
+     * \param max_corner The maximum world corner.
+     */
+    void DrawRectOutline(const Camera2D& camera, const glm::vec2& min_corner, const glm::vec2& max_corner) const;
+
    private:
     unsigned int CompileShader(unsigned int type, const char* source) const;
     bool LinkProgram(unsigned int vertex_shader, unsigned int fragment_shader);

@@ -2,12 +2,16 @@
 
 #include <string>
 
+#include "app/ViewerMode.hpp"
 #include "pdf/PdfDocument.hpp"
 #include "pdf/PdfRenderer.hpp"
+#include "pdf/PdfSelection.hpp"
 #include "render/Camera2D.hpp"
+#include "render/LineRenderer.hpp"
 #include "render/PdfQuad.hpp"
 #include "render/PdfTexture.hpp"
 #include "render/PdfViewerRenderer.hpp"
+#include "render/ViewerMapping.hpp"
 
 namespace no::app {
 
@@ -30,6 +34,13 @@ class Application {
      * \brief Releases resources owned by the application.
      */
     void Shutdown();
+
+    /**
+     * \brief Returns the current window title suffix for UI feedback.
+     *
+     * \return A short string describing the current mode and page state.
+     */
+    std::string GetWindowTitle() const;
 
     /**
      * \brief Handles keyboard input.
@@ -107,6 +118,10 @@ class Application {
    private:
     bool LoadPage(int page_index);
     void FitCurrentPageToView();
+    void UndoLastSelection();
+    void ExportLastSelection();
+    void ToggleViewerMode();
+    void DrawSelectionOverlays() const;
 
     pdf::PdfDocument m_Document;
     pdf::PdfRenderer m_PdfRenderer;
@@ -116,10 +131,21 @@ class Application {
     render::PdfQuad m_PageQuad;
     render::PdfViewerRenderer m_ViewerRenderer;
     render::Camera2D m_Camera;
+    render::LineRenderer m_LineRenderer;
+
+    ViewerMode m_ViewerMode = ViewerMode::Pan;
 
     int m_CurrentPageIndex = 0;
     bool m_Initialized = false;
     bool m_ShouldClose = false;
+
+    render::ViewerMapping m_ViewerMapping;
+
+    std::vector<pdf::PdfSelection> m_Selections;
+
+    bool m_IsSelecting = false;
+    glm::vec2 m_SelectionStartWorld = glm::vec2(0.0f);
+    glm::vec2 m_SelectionCurrentWorld = glm::vec2(0.0f);
 };
 
 }  // namespace no::app

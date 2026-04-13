@@ -5,6 +5,10 @@
 #endif
 #include <GLFW/glfw3.h>
 
+#include <iostream>
+#include <sstream>
+#include <vector>
+
 namespace no::app {
 
 bool Application::Initialize(const std::string& pdf_path, int viewport_width, int viewport_height) {
@@ -17,6 +21,10 @@ bool Application::Initialize(const std::string& pdf_path, int viewport_width, in
     }
 
     if (!m_ViewerRenderer.Initialize()) {
+        return false;
+    }
+
+    if (!m_LineRenderer.Initialize()) {
         return false;
     }
 
@@ -39,6 +47,24 @@ void Application::Shutdown() {
     m_Initialized = false;
 }
 
+std::string Application::GetWindowTitle() const {
+    std::ostringstream ss;
+    ss << "notipdf"
+       << " | mode: " << (m_ViewerMode == ViewerMode::Pan ? "PAN" : "SELECT") << " | page: " << (m_CurrentPageIndex + 1)
+       << "/" << m_Document.GetPageCount();
+    return ss.str();
+}
+
+void Application::ToggleViewerMode() {
+    if (m_ViewerMode == ViewerMode::Pan) {
+        m_ViewerMode = ViewerMode::Select;
+        m_Camera.EndPan();
+    } else {
+        m_ViewerMode = ViewerMode::Pan;
+        m_IsSelecting = false;
+    }
+}
+
 void Application::OnKey(int key, int action, int /*mods*/) {
     if (action != GLFW_PRESS) {
         return;
@@ -49,6 +75,10 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             m_ShouldClose = true;
             break;
 
+        case GLFW_KEY_SPACE:
+            ToggleViewerMode();
+            break;
+
         case GLFW_KEY_N:
         case GLFW_KEY_J:
             NextPage();
@@ -57,6 +87,14 @@ void Application::OnKey(int key, int action, int /*mods*/) {
         case GLFW_KEY_P:
         case GLFW_KEY_K:
             PreviousPage();
+            break;
+
+        case GLFW_KEY_Z:
+            UndoLastSelection();
+            break;
+
+        case GLFW_KEY_E:
+            ExportLastSelection();
             break;
 
         case GLFW_KEY_F:
@@ -76,6 +114,22 @@ void Application::FitCurrentPageToView() {
     m_Camera.FitToContent(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
 }
 
+void Application::UndoLastSelection() {
+    if (!m_Selections.empty()) {
+        m_Selections.pop_back();
+    }
+}
+
+void Application::ExportLastSelection() {
+    if (m_Selections.empty()) {
+        return;
+    }
+
+    const pdf::PdfSelection& selection = m_Selections.back();
+
+    std::cout << "Export selection: page=" << selection.PageIndex << " x=" << selection.X << " y=" << selection.Y
+              << " w=" << selection.Width << " h=" << selection.Height << '\n';
+}
 void Application::Update(float dt) {
     if (!m_Initialized) {
         return;
@@ -92,6 +146,31 @@ void Application::Render() {
     }
 
     m_ViewerRenderer.Draw(m_Camera, m_PageQuad, m_PageTexture);
+    DrawSelectionOverlays();
+}
+
+void Application::DrawSelectionOverlays() const {
+    const glm::vec4 persistent_color(0.95f, 0.25f, 0.2f, 1.0f);
+    const glm::vec4 preview_color(0.2f, 0.9f, 0.3f, 1.0f);
+
+    for (const pdf::PdfSelection& selection : m_Selections) {
+        glm::vec2 min_corner;
+        glm::vec2 max_corner;
+        m_ViewerMapping.SelectionToWorldRect(selection, min_corner, max_corner);
+        m_LineRenderer.DrawRectOutline(m_Camera, min_corner, max_corner, persistent_color);
+    }
+
+    if (m_IsSelecting) {
+        const pdf::PdfSelection preview = m_ViewerMapping.MakeSelectionFromWorldDrag(
+            m_CurrentPageIndex, m_SelectionStartWorld, m_SelectionCurrentWorld);
+
+        if (preview.Width > 0.0f && preview.Height > 0.0f) {
+            glm::vec2 min_corner;
+            glm::vec2 max_corner;
+            m_ViewerMapping.SelectionToWorldRect(preview, min_corner, max_corner);
+            m_LineRenderer.DrawRectOutline(m_Camera, min_corner, max_corner, preview_color);
+        }
+    }
 }
 
 void Application::SetViewportSize(int width, int height) {
@@ -126,17 +205,54 @@ void Application::PreviousPage() {
 }
 
 void Application::OnMouseButton(int button, int action, int /*mods*/, double mouse_x, double mouse_y) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (button != GLFW_MOUSE_BUTTON_LEFT) {
+        return;
+    }
+
+    const glm::vec2 world = m_Camera.ScreenToWorld(mouse_x, mouse_y);
+
+    if (m_ViewerMode == ViewerMode::Pan) {
         if (action == GLFW_PRESS) {
             m_Camera.BeginPan(mouse_x, mouse_y);
         } else if (action == GLFW_RELEASE) {
             m_Camera.EndPan();
         }
+        return;
+    }
+
+    if (m_ViewerMode == ViewerMode::Select) {
+        if (action == GLFW_PRESS) {
+            if (m_ViewerMapping.IsInsidePage(world)) {
+                m_IsSelecting = true;
+                m_SelectionStartWorld = world;
+                m_SelectionCurrentWorld = world;
+            }
+        } else if (action == GLFW_RELEASE) {
+            if (m_IsSelecting) {
+                m_SelectionCurrentWorld = world;
+
+                const pdf::PdfSelection selection = m_ViewerMapping.MakeSelectionFromWorldDrag(
+                    m_CurrentPageIndex, m_SelectionStartWorld, m_SelectionCurrentWorld);
+
+                if (selection.Width > 4.0f && selection.Height > 4.0f) {
+                    m_Selections.push_back(selection);
+                }
+
+                m_IsSelecting = false;
+            }
+        }
     }
 }
 
 void Application::OnMouseMove(double mouse_x, double mouse_y) {
-    m_Camera.PanTo(mouse_x, mouse_y);
+    if (m_ViewerMode == ViewerMode::Pan) {
+        m_Camera.PanTo(mouse_x, mouse_y);
+        return;
+    }
+
+    if (m_ViewerMode == ViewerMode::Select && m_IsSelecting) {
+        m_SelectionCurrentWorld = m_Camera.ScreenToWorld(mouse_x, mouse_y);
+    }
 }
 
 void Application::OnScroll(double /*xoffset*/, double yoffset, double mouse_x, double mouse_y) {
@@ -156,6 +272,13 @@ bool Application::LoadPage(int page_index) {
 
     m_PageQuad.SetSize(aspect, 1.0f);
     FitCurrentPageToView();
+
+    m_ViewerMapping.SetPageSize(m_RenderedPage.width, m_RenderedPage.height);
+    m_ViewerMapping.SetQuadSize(m_PageQuad.GetWidth(), m_PageQuad.GetHeight());
+
+    m_CurrentPageIndex = page_index;
+    m_Selections.clear();
+    m_IsSelecting = false;
 
     m_CurrentPageIndex = page_index;
     return true;
