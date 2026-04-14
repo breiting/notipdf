@@ -4,11 +4,11 @@ A minimalist PDF preprocessing tool for optimizing sheet music being used for e-
 
 ## ✨ Motivation
 
-notipdf is a small, focused tool to prepare sheet music PDFs for real-world use — especially on E-Ink devices like the PocketBook InkPad.
+**notipdf** is a small, focused tool to prepare sheet music PDFs for real-world use — especially on E-Ink devices like the PocketBook InkPad.
 
 The core idea is simple:
 
-Simplicity is key.
+> Simplicity is key.
 
 No heavy frameworks.
 No bloated UI.
@@ -20,14 +20,12 @@ Just:
 - select what you need
 - export clean, optimized pages
 
-Built for practical use during rehearsals, performances, and marching situations.
-
 ## 🚀 Features
 
 - 📄 Load and view PDFs (fast, lightweight)
 - 🔍 Smooth pan & zoom (GLFW-based)
 - 🖱️ Rectangle selection (single selection, moveable)
-- 🔄 Page navigation
+- 🔄 Page navigation (j/k or n/p)
 - 🔁 Rotation support (90° steps)
 - 📤 Export cropped regions as optimized PDFs
 - 🧾 Automatic meta.json generation (structured for library use)
@@ -40,69 +38,64 @@ You need:
 - C++17 compatible compiler
 - CMake (≥ 3.28)
 - MuPDF (installed via system)
-- (optional) ImageMagick (magick) for PDF writing
+- (optional) ImageMagick for PDF writing
 
-### macOS (Homebrew)
+### macOS
+
+Use Homebrew to install the required package(s).
 
 ```bash
 brew install mupdf
-brew install imagemagick # optional (sips is used by default)
 ```
 
-### Linux (example: Ubuntu)
+### Linux
 
 ```bash
-sudo apt libgumbo-dev libmujs-dev libharfbuzz-dev libopenjp2-7-dev libjpeg-dev libjbig2dec0-dev install libgl1-mesa-dev libglu1-mesa-dev libfreetype-dev libx11-dev libxrandr-dev libxinerama-dev libxi-dev libxcursor-dev libmupdf-dev
-sudo apt install imagemagick # required
+sudo apt libgumbo-dev libmujs-dev libharfbuzz-dev libopenjp2-7-dev libjpeg-dev libjbig2dec0-dev install libgl1-mesa-dev libglu1-mesa-dev libfreetype-dev libx11-dev libxrandr-dev libxinerama-dev libxi-dev libxcursor-dev libmupdf-dev imagemagick
 ```
 
 ## 🛠️ Build Instructions
 
-### macOS 🍎
+First, clone the repository to your local machine.
 
 ```bash
-git clone <your-repo-url>
-cd notipdf
-
-cmake -B build
-cmake --build build
-
-./build/notipdf input.pdf
+git clone https://github.com/breiting/notipdf
 ```
 
-### Linux 🐧
+then build it:
 
 ```bash
-git clone <your-repo-url>
 cd notipdf
 
 cmake -B build
 cmake --build build
+```
 
+finally start the GUI application with a sample PDF file:
+
+```bash
 ./build/notipdf input.pdf
 ```
 
 ## 🎮 Controls
 
-### Navigation
+- `j / n` → next page
+- `k / p` → previous page
+- `r` → rotate (counter-clockwise)
+- `f` → fit to screen
+- `q` → quit
 
-- j / n → next page
-- k / p → previous page
-- r → rotate (counter-clockwise)
-- f → fit to screen
-- q → quit
+### Workflow
 
-### Interaction
+Use the `Spacebar` to toggle between navigation and selection. Before starting the selection you can lock the aspect ratio using the `l` key (currently optimized for InkPad 4).
 
-- 🖱️ Left Mouse
-- no selection → create selection
-- selection exists → move selection
-- Space → toggle mode (pan / select)
-- Delete → remove selection
+Make sure to switch to the selection mode and then use the mouse to drag a rectangle, selecting the area for export. If a selection is present, the mouse is used to move the selection box.
 
-## Export
+If you want to delete the selection use the `Delete` or `Backspace` key.
 
-- e → open export dialog
+### Export
+
+- `e` → open export dialog
 
 Dialog fields:
 
@@ -125,22 +118,22 @@ library/
 
 Config file location:
 
-````bash
+```bash
 $XDG_CONFIG_HOME/notipdf/config.json
-```A
+```
 
 Example:
 
 ```json
 {
-    "output_directory": "/Users/you/notipdf/library",
-    "default_book": 0,
-    "default_part": 0,
-    "optimize_for_eink": true,
-    "threshold_black_white": false,
-    "pdf_backend": "sips"
+  "output_directory": "/Users/you/notipdf/library",
+  "default_book": 0,
+  "default_part": 0,
+  "optimize_for_eink": true,
+  "threshold_black_white": false,
+  "pdf_backend": "sips"
 }
-````
+```
 
 ### PDF backends
 
@@ -179,12 +172,10 @@ MIT License
 
 ## 🎯 Philosophy
 
-notipdf is intentionally small.
+`notipdf` is intentionally small.
 
 If something feels complicated, it’s probably wrong.
 
 ## 🙌 Final Note
 
-This tool was built for real musicians —
-for situations where you don’t want to fight software,
-but just play.
+Feel free to fork the repository and change it to your needs.
