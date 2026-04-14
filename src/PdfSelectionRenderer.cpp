@@ -50,7 +50,7 @@ bool PdfSelectionRenderer::RenderSelection(const PdfDocument& document, const Pd
         const float sel_h = sel_y1 - sel_y0;
 
         if (sel_w <= 0.0f || sel_h <= 0.0f) {
-            fz_throw(ctx, FZ_ERROR_ARGUMENT, "Invalid selection size.");
+            fz_throw(ctx, FZ_ERROR_GENERIC, "Invalid selection size.");
         }
 
         const float scale_x = static_cast<float>(target_w) / sel_w;

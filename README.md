@@ -38,7 +38,7 @@ Built for practical use during rehearsals, performances, and marching situations
 You need:
 
 - C++17 compatible compiler
-- CMake (≥ 3.31)
+- CMake (≥ 3.28)
 - MuPDF (installed via system)
 - (optional) ImageMagick (magick) for PDF writing
 
@@ -46,14 +46,14 @@ You need:
 
 ```bash
 brew install mupdf
-brew install imagemagick # optional
+brew install imagemagick # optional (sips is used by default)
 ```
 
 ### Linux (example: Ubuntu)
 
 ```bash
-sudo apt install libmupdf-dev
-sudo apt install imagemagick # optional
+sudo apt libgumbo-dev libmujs-dev libharfbuzz-dev libopenjp2-7-dev libjpeg-dev libjbig2dec0-dev install libgl1-mesa-dev libglu1-mesa-dev libfreetype-dev libx11-dev libxrandr-dev libxinerama-dev libxi-dev libxcursor-dev libmupdf-dev
+sudo apt install imagemagick # required
 ```
 
 ## 🛠️ Build Instructions

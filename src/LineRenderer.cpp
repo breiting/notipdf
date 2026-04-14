@@ -34,15 +34,24 @@ void main() {
 LineRenderer::LineRenderer() = default;
 
 LineRenderer::~LineRenderer() {
+    Destroy();
+}
+
+void LineRenderer::Destroy() {
     if (m_Vbo != 0) {
         glDeleteBuffers(1, &m_Vbo);
+        m_Vbo = 0;
     }
     if (m_Vao != 0) {
         glDeleteVertexArrays(1, &m_Vao);
+        m_Vao = 0;
     }
     if (m_Program != 0) {
         glDeleteProgram(m_Program);
+        m_Program = 0;
     }
+    m_UniformMvp = -1;
+    m_UniformColor = -1;
 }
 
 bool LineRenderer::Initialize() {

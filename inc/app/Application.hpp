@@ -43,6 +43,12 @@ class Application {
     void Shutdown();
 
     /**
+     * \brief Releases OpenGL resources held by the application.
+     * Must be called before Window::Destroy() to ensure GL context is still valid.
+     */
+    void Destroy();
+
+    /**
      * \brief Returns the current window title suffix for UI feedback.
      *
      * \return A short string describing the current mode and page state.

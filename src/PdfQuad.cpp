@@ -17,15 +17,23 @@ PdfQuad::PdfQuad() : m_Vao(0), m_Vbo(0), m_Ebo(0), m_Width(1.0f), m_Height(1.0f)
 }
 
 PdfQuad::~PdfQuad() {
+    Destroy();
+}
+
+void PdfQuad::Destroy() {
     if (m_Ebo != 0) {
         glDeleteBuffers(1, &m_Ebo);
+        m_Ebo = 0;
     }
     if (m_Vbo != 0) {
         glDeleteBuffers(1, &m_Vbo);
+        m_Vbo = 0;
     }
     if (m_Vao != 0) {
         glDeleteVertexArrays(1, &m_Vao);
+        m_Vao = 0;
     }
+    m_Initialized = false;
 }
 
 bool PdfQuad::Initialize() {

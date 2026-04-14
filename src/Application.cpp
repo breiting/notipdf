@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
+#include <algorithm>
 #include <cctype>
 #include <filesystem>
 #include <iostream>
@@ -62,6 +63,13 @@ void Application::Shutdown() {
     m_Initialized = false;
 }
 
+void Application::Destroy() {
+    m_PageTexture.Destroy();
+    m_PageQuad.Destroy();
+    m_ViewerRenderer.Destroy();
+    m_LineRenderer.Destroy();
+}
+
 void Application::RotateCCW() {
     m_RotationDegrees += 90;
     if (m_RotationDegrees >= 360) {
@@ -113,11 +121,11 @@ void Application::OnKey(int key, int action, int /*mods*/) {
     }
 
     switch (key) {
-        case GLFW_KEY_ESCAPE:
+        case GLFW_KEY_Q:
             m_ShouldClose = true;
             break;
 
-        case GLFW_KEY_Q:
+        case GLFW_KEY_SPACE:
             ToggleViewerMode();
             break;
 
@@ -292,13 +300,18 @@ bool Application::ConfirmExport() {
     const image::ImageOptimizationSettings optimization_settings = BuildImageOptimizationSettings();
 
     no::pdf::PdfExporter exporter(m_Config.Backend);
-
     const bool export_success =
         exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape, m_RotationDegrees,
                         m_ExportDialogState.OptimizeForEInk, optimization_settings);
 
+    m_Config.DefaultBook = m_ExportDialogState.Book;
+    m_Config.DefaultPart = m_ExportDialogState.Part;
+    m_Config.DefaultOptimizeForEInk = m_ExportDialogState.OptimizeForEInk;
+    m_Config.DefaultThresholdBlackWhite = m_ExportDialogState.ThresholdToBlackAndWhite;
+    m_ConfigService.Save(m_Config);
+
     if (!export_success) {
-        std::cerr << "Export failed.\n";
+        LOG(Error) << "Export failed.\n";
         return false;
     }
 
@@ -313,18 +326,11 @@ bool Application::ConfirmExport() {
     meta_data.PdfFileName = pdf_file_name;
 
     if (!m_MetaWriter.WriteOrUpdate(meta_data, output_json)) {
-        std::cerr << "Writing meta.json failed.\n";
+        LOG(Error) << "Writing meta.json failed.\n";
         return false;
     }
-
-    m_Config.DefaultBook = m_ExportDialogState.Book;
-    m_Config.DefaultPart = m_ExportDialogState.Part;
-    m_Config.DefaultOptimizeForEInk = m_ExportDialogState.OptimizeForEInk;
-    m_Config.DefaultThresholdBlackWhite = m_ExportDialogState.ThresholdToBlackAndWhite;
-    m_ConfigService.Save(m_Config);
-
-    std::cout << "Exported PDF: " << output_pdf << '\n';
-    std::cout << "Updated metadata: " << output_json << '\n';
+    LOG(Info) << "Updated metadata: " << output_json << '\n';
+    LOG(Info) << "Exported PDF: " << output_pdf << '\n';
 
     ClearSelections();
     return true;

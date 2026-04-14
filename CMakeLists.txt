@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.1)
+cmake_minimum_required(VERSION 3.28)
 project(notipdf VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -34,6 +34,8 @@ FetchContent_MakeAvailable(glm)
 # ----------------------------------------------------------
 # GLFW
 # ----------------------------------------------------------
+set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -92,47 +94,117 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 # ----------------------------------------------------------
-# Homebrew MuPDF
+# MuPDF (portable: Homebrew + Linux)
 # ----------------------------------------------------------
+
+# Try Homebrew first (macOS)
 find_program(BREW_EXECUTABLE brew)
-if(NOT BREW_EXECUTABLE)
-    message(FATAL_ERROR "Homebrew not found. Install Homebrew first.")
+
+if(BREW_EXECUTABLE)
+    execute_process(
+        COMMAND ${BREW_EXECUTABLE} --prefix mupdf
+        OUTPUT_VARIABLE MUPDF_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE MUPDF_PREFIX_RESULT
+    )
 endif()
 
-execute_process(
-    COMMAND ${BREW_EXECUTABLE} --prefix mupdf
-    OUTPUT_VARIABLE MUPDF_PREFIX
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    RESULT_VARIABLE MUPDF_PREFIX_RESULT
-)
+# If brew worked, use it
+if(BREW_EXECUTABLE AND MUPDF_PREFIX_RESULT EQUAL 0 AND NOT MUPDF_PREFIX STREQUAL "")
+    message(STATUS "Using MuPDF from Homebrew: ${MUPDF_PREFIX}")
 
-if(NOT MUPDF_PREFIX_RESULT EQUAL 0 OR MUPDF_PREFIX STREQUAL "")
-    message(FATAL_ERROR "MuPDF not found via Homebrew. Run: brew install mupdf")
+    set(MUPDF_HINTS
+        ${MUPDF_PREFIX}/include
+        ${MUPDF_PREFIX}/lib
+    )
+else()
+    message(STATUS "Using system MuPDF (Linux or manual install)")
+
+    set(MUPDF_HINTS
+        /usr/include
+        /usr/local/include
+        /usr/lib
+        /usr/local/lib
+    )
 endif()
 
-message(STATUS "MuPDF prefix: ${MUPDF_PREFIX}")
-
+# Include dir
 find_path(MUPDF_INCLUDE_DIR
     NAMES mupdf/fitz.h
-    HINTS ${MUPDF_PREFIX}/include
+    HINTS ${MUPDF_HINTS}
+    PATH_SUFFIXES include
     REQUIRED
 )
 
+# Main lib
 find_library(MUPDF_LIBRARY
     NAMES mupdf
-    HINTS ${MUPDF_PREFIX}/lib
+    HINTS ${MUPDF_HINTS}
+    PATH_SUFFIXES lib
     REQUIRED
 )
 
+# Third-party lib (optional)
 find_library(MUPDF_THIRD_LIBRARY
     NAMES mupdf-third
-    HINTS ${MUPDF_PREFIX}/lib
-    REQUIRED
+    HINTS ${MUPDF_HINTS}
+    PATH_SUFFIXES lib
 )
 
-add_library(mupdf_external INTERFACE)
-target_include_directories(mupdf_external INTERFACE ${MUPDF_INCLUDE_DIR})
-target_link_libraries(mupdf_external INTERFACE ${MUPDF_LIBRARY} ${MUPDF_THIRD_LIBRARY})
+# Debug output
+message(STATUS "MUPDF_INCLUDE_DIR: ${MUPDF_INCLUDE_DIR}")
+message(STATUS "MUPDF_LIBRARY: ${MUPDF_LIBRARY}")
+message(STATUS "MUPDF_THIRD_LIBRARY: ${MUPDF_THIRD_LIBRARY}")
+
+##############################################
+# Add additional requirements mainly for Linux
+##############################################
+if(UNIX AND NOT APPLE)
+    find_package(Freetype REQUIRED)
+    find_package(ZLIB REQUIRED)
+    find_package(JPEG REQUIRED)
+    find_library(OPENJPEG_LIBRARY NAMES openjp2 REQUIRED)
+    find_package(PkgConfig REQUIRED)
+
+    pkg_check_modules(HARFBUZZ REQUIRED harfbuzz)
+    find_library(JBIG2DEC_LIBRARY NAMES jbig2dec REQUIRED)
+    find_library(GUMBO_LIBRARY NAMES gumbo REQUIRED)
+    find_library(MUJS_LIBRARY NAMES mujs REQUIRED)
+
+    add_library(mupdf_external INTERFACE)
+    target_include_directories(mupdf_external
+        INTERFACE
+            ${MUPDF_INCLUDE_DIR}
+            ${HARFBUZZ_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mupdf_external
+        INTERFACE
+            "-Wl,--start-group"
+            ${MUPDF_LIBRARY}
+            ${MUPDF_THIRD_LIBRARY}
+            Freetype::Freetype
+            ZLIB::ZLIB
+            JPEG::JPEG
+            ${OPENJPEG_LIBRARY}
+            ${JBIG2DEC_LIBRARY}
+            ${HARFBUZZ_LIBRARIES}
+            ${GUMBO_LIBRARY}
+            ${MUJS_LIBRARY}
+            "-Wl,--end-group"
+    )
+else()
+    add_library(mupdf_external INTERFACE)
+    target_include_directories(mupdf_external
+        INTERFACE
+            ${MUPDF_INCLUDE_DIR}
+    )
+    target_link_libraries(mupdf_external
+        INTERFACE
+            ${MUPDF_LIBRARY}
+            ${MUPDF_THIRD_LIBRARY}
+    )
+endif()
 
 # ----------------------------------------------------------
 # App

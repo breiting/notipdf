@@ -44,9 +44,16 @@ PdfViewerRenderer::PdfViewerRenderer() : m_Program(0), m_UMvp(-1), m_UTexture(-1
 }
 
 PdfViewerRenderer::~PdfViewerRenderer() {
+    Destroy();
+}
+
+void PdfViewerRenderer::Destroy() {
     if (m_Program != 0) {
         glDeleteProgram(m_Program);
+        m_Program = 0;
     }
+    m_UMvp = -1;
+    m_UTexture = -1;
 }
 
 bool PdfViewerRenderer::Initialize() {

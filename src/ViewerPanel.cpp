@@ -6,10 +6,16 @@
 namespace no::ui {
 
 ViewerPanel::~ViewerPanel() {
+    Destroy();
+}
+
+void ViewerPanel::Destroy() {
     if (m_TextureId != 0) {
         glDeleteTextures(1, &m_TextureId);
         m_TextureId = 0;
     }
+    m_TextureWidth = 0;
+    m_TextureHeight = 0;
 }
 
 bool ViewerPanel::EnsureTexture(const no::pdf::RenderedPage& page) {

@@ -31,6 +31,11 @@ class PdfQuad {
     bool Initialize();
 
     /**
+     * \brief Releases all OpenGL resources.
+     */
+    void Destroy();
+
+    /**
      * \brief Updates the quad size in world units.
      *
      * \param width The quad width.

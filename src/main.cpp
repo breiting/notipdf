@@ -163,6 +163,7 @@ int main(int argc, char** argv) {
     }
 
     app.Shutdown();
+    app.Destroy();
     window.Destroy();
     return 0;
 }

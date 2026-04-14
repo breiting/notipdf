@@ -32,6 +32,11 @@ class LineRenderer {
     bool Initialize();
 
     /**
+     * \brief Releases all OpenGL resources.
+     */
+    void Destroy();
+
+    /**
      * \brief Draws a rectangle outline in world space.
      *
      * \param camera The active camera.

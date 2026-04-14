@@ -34,6 +34,11 @@ class PdfViewerRenderer {
     bool Initialize();
 
     /**
+     * \brief Releases all OpenGL resources.
+     */
+    void Destroy();
+
+    /**
      * \brief Sets the viewport size in pixels.
      *
      * \param width The viewport width.

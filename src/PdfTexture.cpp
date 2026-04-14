@@ -11,6 +11,10 @@ PdfTexture::~PdfTexture() {
     Reset();
 }
 
+void PdfTexture::Destroy() {
+    Reset();
+}
+
 PdfTexture::PdfTexture(PdfTexture&& other) noexcept
     : m_TextureId(other.m_TextureId), m_Width(other.m_Width), m_Height(other.m_Height) {
     other.m_TextureId = 0;

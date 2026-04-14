@@ -60,12 +60,18 @@ class PdfTexture {
      */
     int GetHeight() const;
 
-    /**
+/**
      * \brief Returns whether a valid OpenGL texture exists.
      */
     bool IsValid() const;
 
-   private:
+    /**
+     * \brief Releases the OpenGL texture.
+     * Must be called while GL context is still valid.
+     */
+    void Destroy();
+
+private:
     void Reset();
 
     unsigned int m_TextureId;

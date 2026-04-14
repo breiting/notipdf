@@ -5,7 +5,7 @@
 namespace no::ui {
 
 class ViewerPanel {
-   public:
+    public:
     ViewerPanel() = default;
     ~ViewerPanel();
 
@@ -15,7 +15,9 @@ class ViewerPanel {
     bool EnsureTexture(const no::pdf::RenderedPage& page);
     void Draw(const no::pdf::RenderedPage& page);
 
-   private:
+    void Destroy();
+
+private:
     unsigned int m_TextureId = 0;
     int m_TextureWidth = 0;
     int m_TextureHeight = 0;
