@@ -54,10 +54,14 @@ const char* GetInstrumentKey(InstrumentId id) {
             return "trompete_1";
         case InstrumentId::Trompete2:
             return "trompete_2";
+        case InstrumentId::Trompete3:
+            return "trompete_3";
         case InstrumentId::Fluegelhorn1:
             return "fluegelhorn_1";
         case InstrumentId::Fluegelhorn2:
             return "fluegelhorn_2";
+        case InstrumentId::Fluegelhorn3:
+            return "fluegelhorn_3";
         case InstrumentId::Gesang:
             return "gesang";
         case InstrumentId::Andere:

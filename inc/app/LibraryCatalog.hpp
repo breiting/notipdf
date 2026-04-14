@@ -22,8 +22,10 @@ enum class BookId {
 enum class InstrumentId {
     Trompete1 = 0,
     Trompete2,     //
+    Trompete3,     //
     Fluegelhorn1,  //
     Fluegelhorn2,  //
+    Fluegelhorn3,  //
     Gesang,        //
     Andere
 };

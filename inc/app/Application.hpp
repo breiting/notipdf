@@ -170,7 +170,6 @@ class Application {
     static std::string MakeThreeDigitNumber(int value);
 
     static std::string SanitizeFileName(const std::string& value);
-    static const char* GetVoiceName(int index);
 
     pdf::PdfDocument m_Document;
     pdf::PdfRenderer m_PdfRenderer;

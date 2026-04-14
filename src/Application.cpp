@@ -243,8 +243,8 @@ void Application::DrawExportDialog() {
             m_ExportDialogState.Author = author_buffer;
         }
 
-        const char* instrument_items[] = {"1. Trompete",    "2. Trompete", "1. Fluegelhorn",
-                                          "2. Fluegelhorn", "Gesang",      "Andere"};
+        const char* instrument_items[] = {"1. Trompete",    "2. Trompete",    "3. Trompete", "1. Fluegelhorn",
+                                          "2. Fluegelhorn", "3. Fluegelhorn", "Gesang",      "Andere"};
 
         int instrument_index = static_cast<int>(m_ExportDialogState.Instrument);
         ImGui::Combo("Stimme", &instrument_index, instrument_items, IM_ARRAYSIZE(instrument_items));
@@ -339,7 +339,7 @@ bool Application::ConfirmExport() {
     LOG(Info) << "Updated metadata: " << output_json << '\n';
     LOG(Info) << "Exported PDF: " << output_pdf << '\n';
 
-    ClearSelections();
+    // ClearSelections();
     return true;
 }
 
@@ -388,21 +388,6 @@ std::string Application::SanitizeFileName(const std::string& value) {
     }
 
     return collapsed;
-}
-
-const char* Application::GetVoiceName(int index) {
-    switch (index) {
-        case 0:
-            return "trompete_1";
-        case 1:
-            return "trompete_2";
-        case 2:
-            return "fluegelhorn_1";
-        case 3:
-            return "fluegelhorn_2";
-        default:
-            return "unknown";
-    }
 }
 
 bool Application::ShouldClose() const {
