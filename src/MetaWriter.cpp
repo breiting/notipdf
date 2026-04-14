@@ -21,28 +21,29 @@ bool MetaWriter::WriteOrUpdate(const MetaData& meta_data, const std::filesystem:
     json["piece"]["number"] = meta_data.PieceNumber;
     json["piece"]["id"] = meta_data.PieceId;
     json["piece"]["title"] = meta_data.PieceTitle;
+    json["piece"]["author"] = meta_data.PieceAuthor;
 
-    if (!json.contains("parts") || !json["parts"].is_array()) {
-        json["parts"] = nlohmann::json::array();
+    if (!json.contains("instruments") || !json["instruments"].is_array()) {
+        json["instruments"] = nlohmann::json::array();
     }
 
     bool updated = false;
-    for (auto& part : json["parts"]) {
-        if (part.contains("id") && part["id"].get<std::string>() == meta_data.PartId) {
-            part["id"] = meta_data.PartId;
-            part["title"] = meta_data.PartTitle;
-            part["pdf"] = meta_data.PdfFileName;
+    for (auto& instrument : json["instruments"]) {
+        if (instrument.contains("id") && instrument["id"].get<std::string>() == meta_data.InstrumentId) {
+            instrument["id"] = meta_data.InstrumentId;
+            instrument["title"] = meta_data.InstrumentTitle;
+            instrument["pdf"] = meta_data.PdfFileName;
             updated = true;
             break;
         }
     }
 
     if (!updated) {
-        nlohmann::json part;
-        part["id"] = meta_data.PartId;
-        part["title"] = meta_data.PartTitle;
-        part["pdf"] = meta_data.PdfFileName;
-        json["parts"].push_back(part);
+        nlohmann::json instrument;
+        instrument["id"] = meta_data.InstrumentId;
+        instrument["title"] = meta_data.InstrumentTitle;
+        instrument["pdf"] = meta_data.PdfFileName;
+        json["instruments"].push_back(instrument);
     }
 
     std::ofstream output(output_path);

@@ -48,38 +48,38 @@ const char* GetBookTitle(BookId id) {
     }
 }
 
-const char* GetPartKey(PartId id) {
+const char* GetInstrumentKey(InstrumentId id) {
     switch (id) {
-        case PartId::Trompete1:
+        case InstrumentId::Trompete1:
             return "trompete_1";
-        case PartId::Trompete2:
+        case InstrumentId::Trompete2:
             return "trompete_2";
-        case PartId::Fluegelhorn1:
+        case InstrumentId::Fluegelhorn1:
             return "fluegelhorn_1";
-        case PartId::Fluegelhorn2:
+        case InstrumentId::Fluegelhorn2:
             return "fluegelhorn_2";
-        case PartId::Gesang:
+        case InstrumentId::Gesang:
             return "gesang";
-        case PartId::Andere:
+        case InstrumentId::Andere:
             return "andere";
         default:
             return "andere";
     }
 }
 
-const char* GetPartTitle(PartId id) {
+const char* GetInstrumentTitle(InstrumentId id) {
     switch (id) {
-        case PartId::Trompete1:
+        case InstrumentId::Trompete1:
             return "1. Trompete";
-        case PartId::Trompete2:
+        case InstrumentId::Trompete2:
             return "2. Trompete";
-        case PartId::Fluegelhorn1:
+        case InstrumentId::Fluegelhorn1:
             return "1. Fluegelhorn";
-        case PartId::Fluegelhorn2:
+        case InstrumentId::Fluegelhorn2:
             return "2. Fluegelhorn";
-        case PartId::Gesang:
+        case InstrumentId::Gesang:
             return "Gesang";
-        case PartId::Andere:
+        case InstrumentId::Andere:
             return "Andere";
         default:
             return "Andere";

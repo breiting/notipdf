@@ -17,7 +17,7 @@ struct AppConfig {
     bool DefaultThresholdBlackWhite = false;
 
     BookId DefaultBook = BookId::Marschbuch;
-    PartId DefaultPart = PartId::Trompete1;
+    InstrumentId DefaultInstrument = InstrumentId::Trompete1;
 
     pdf::PdfBackend Backend = pdf::PdfBackend::Sips;
 };

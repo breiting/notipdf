@@ -182,7 +182,7 @@ void Application::OpenExportDialog() {
     }
 
     m_ExportDialogState.Book = m_Config.DefaultBook;
-    m_ExportDialogState.Part = m_Config.DefaultPart;
+    m_ExportDialogState.Instrument = m_Config.DefaultInstrument;
     m_ExportDialogState.OptimizeForEInk = m_Config.DefaultOptimizeForEInk;
     m_ExportDialogState.ThresholdToBlackAndWhite = m_Config.DefaultThresholdBlackWhite;
 
@@ -214,7 +214,9 @@ void Application::DrawExportDialog() {
 
     if (ImGui::BeginPopupModal("Export Selection", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         char title_buffer[256];
+        char author_buffer[256];
         std::snprintf(title_buffer, sizeof(title_buffer), "%s", m_ExportDialogState.Title.c_str());
+        std::snprintf(author_buffer, sizeof(author_buffer), "%s", m_ExportDialogState.Author.c_str());
 
         const char* book_items[] = {"Marschbuch",    "Kirchenbuch", "Mareiner Blech", "Quartett",
                                     "Brassensemble", "Duette",      "Lieder",         "Andere"};
@@ -237,12 +239,16 @@ void Application::DrawExportDialog() {
             m_ExportDialogState.Title = title_buffer;
         }
 
-        const char* part_items[] = {"1. Trompete",    "2. Trompete", "1. Fluegelhorn",
-                                    "2. Fluegelhorn", "Gesang",      "Andere"};
+        if (ImGui::InputText("Autor", author_buffer, sizeof(author_buffer))) {
+            m_ExportDialogState.Author = author_buffer;
+        }
 
-        int part_index = static_cast<int>(m_ExportDialogState.Part);
-        ImGui::Combo("Stimme", &part_index, part_items, IM_ARRAYSIZE(part_items));
-        m_ExportDialogState.Part = static_cast<PartId>(part_index);
+        const char* instrument_items[] = {"1. Trompete",    "2. Trompete", "1. Fluegelhorn",
+                                          "2. Fluegelhorn", "Gesang",      "Andere"};
+
+        int instrument_index = static_cast<int>(m_ExportDialogState.Instrument);
+        ImGui::Combo("Stimme", &instrument_index, instrument_items, IM_ARRAYSIZE(instrument_items));
+        m_ExportDialogState.Instrument = static_cast<InstrumentId>(instrument_index);
 
         ImGui::Separator();
         ImGui::Checkbox("Optimize for E-Ink", &m_ExportDialogState.OptimizeForEInk);
@@ -250,7 +256,7 @@ void Application::DrawExportDialog() {
 
         const std::string piece_id = SanitizeFileName(m_ExportDialogState.Title);
         const std::string piece_dir = MakePieceDirectoryName(m_ExportDialogState.PieceNumber, piece_id);
-        const std::string pdf_preview = std::string(GetPartKey(m_ExportDialogState.Part)) + ".pdf";
+        const std::string pdf_preview = std::string(GetInstrumentKey(m_ExportDialogState.Instrument)) + ".pdf";
 
         ImGui::Separator();
         ImGui::Text("Ordner: %s/%s", GetBookKey(m_ExportDialogState.Book), piece_dir.c_str());
@@ -284,9 +290,9 @@ bool Application::ConfirmExport() {
     const std::string piece_id = SanitizeFileName(m_ExportDialogState.Title);
     const std::string piece_dir_name = MakePieceDirectoryName(m_ExportDialogState.PieceNumber, piece_id);
 
-    const std::string part_id = GetPartKey(m_ExportDialogState.Part);
-    const std::string part_title = GetPartTitle(m_ExportDialogState.Part);
-    const std::string pdf_file_name = part_id + std::string(".pdf");
+    const std::string instrument_id = GetInstrumentKey(m_ExportDialogState.Instrument);
+    const std::string instrument_title = GetInstrumentTitle(m_ExportDialogState.Instrument);
+    const std::string pdf_file_name = instrument_id + std::string(".pdf");
 
     const std::filesystem::path piece_directory =
         m_Config.OutputDirectory / GetBookKey(m_ExportDialogState.Book) / piece_dir_name;
@@ -305,7 +311,7 @@ bool Application::ConfirmExport() {
                         m_ExportDialogState.OptimizeForEInk, optimization_settings);
 
     m_Config.DefaultBook = m_ExportDialogState.Book;
-    m_Config.DefaultPart = m_ExportDialogState.Part;
+    m_Config.DefaultInstrument = m_ExportDialogState.Instrument;
     m_Config.DefaultOptimizeForEInk = m_ExportDialogState.OptimizeForEInk;
     m_Config.DefaultThresholdBlackWhite = m_ExportDialogState.ThresholdToBlackAndWhite;
     m_ConfigService.Save(m_Config);
@@ -321,8 +327,9 @@ bool Application::ConfirmExport() {
     meta_data.PieceNumber = m_ExportDialogState.PieceNumber;
     meta_data.PieceId = piece_id;
     meta_data.PieceTitle = m_ExportDialogState.Title;
-    meta_data.PartId = part_id;
-    meta_data.PartTitle = part_title;
+    meta_data.PieceAuthor = m_ExportDialogState.Author;
+    meta_data.InstrumentId = instrument_id;
+    meta_data.InstrumentTitle = instrument_title;
     meta_data.PdfFileName = pdf_file_name;
 
     if (!m_MetaWriter.WriteOrUpdate(meta_data, output_json)) {

@@ -19,7 +19,7 @@ enum class BookId {
 /**
  * \brief Supported musical parts.
  */
-enum class PartId {
+enum class InstrumentId {
     Trompete1 = 0,
     Trompete2,     //
     Fluegelhorn1,  //
@@ -41,11 +41,11 @@ const char* GetBookTitle(BookId id);
 /**
  * \brief Returns the stable string identifier for a part.
  */
-const char* GetPartKey(PartId id);
+const char* GetInstrumentKey(InstrumentId id);
 
 /**
  * \brief Returns the display title for a part.
  */
-const char* GetPartTitle(PartId id);
+const char* GetInstrumentTitle(InstrumentId id);
 
 }  // namespace no::app

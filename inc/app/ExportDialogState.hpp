@@ -16,8 +16,9 @@ struct ExportDialogState {
     BookId Book = BookId::Marschbuch;
     int PieceNumber = 1;
     std::string Title;
+    std::string Author;
 
-    PartId Part = PartId::Trompete1;
+    InstrumentId Instrument = InstrumentId::Trompete1;
 
     bool OptimizeForEInk = true;
     bool ThresholdToBlackAndWhite = false;

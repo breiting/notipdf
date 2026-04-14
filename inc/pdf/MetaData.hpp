@@ -14,9 +14,11 @@ struct MetaData {
     int PieceNumber = 0;
     std::string PieceId;
     std::string PieceTitle;
+    std::string PieceAuthor;
 
-    std::string PartId;
-    std::string PartTitle;
+    std::string InstrumentId;
+    std::string InstrumentTitle;
+
     std::string PdfFileName;
 };
 

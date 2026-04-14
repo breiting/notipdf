@@ -102,7 +102,8 @@ Dialog fields:
 - Book
 - Piece number
 - Title
-- Part (instrument)
+- Author
+- Instrument
 
 Result:
 
@@ -128,7 +129,7 @@ Example:
 {
   "output_directory": "/Users/you/notipdf/library",
   "default_book": 0,
-  "default_part": 0,
+  "default_instrument": 0,
   "optimize_for_eink": true,
   "threshold_black_white": false,
   "pdf_backend": "sips"
@@ -142,9 +143,9 @@ Example:
 
 ## 📚 Data Model
 
-- Book → Piece → Part
+- Book → Piece → Instrument
 - `meta.json` is written per piece
-- Multiple parts per piece supported
+- Multiple instruments per piece supported
 
 Example:
 
@@ -152,7 +153,7 @@ Example:
 {
   "book": { "id": "marschbuch", "title": "Marschbuch" },
   "piece": { "number": 6, "id": "47er", "title": "47er" },
-  "parts": [
+  "instruments": [
     { "id": "trompete_2", "title": "2. Trompete", "pdf": "trompete_2.pdf" }
   ]
 }
