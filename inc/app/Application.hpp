@@ -26,7 +26,6 @@ namespace no::app {
  */
 class Application {
    public:
-   public:
     /**
      * \brief Initializes the application and loads the input PDF.
      *
