@@ -157,7 +157,17 @@ void Application::OnKey(int key, int action, int /*mods*/) {
             break;
 
         case GLFW_KEY_L:
-            m_IsAspectLocked = !m_IsAspectLocked;
+            switch (m_AspectLockMode) {
+                case AspectLockMode::NoLock:
+                    m_AspectLockMode = AspectLockMode::Landscape;
+                    break;
+                case AspectLockMode::Landscape:
+                    m_AspectLockMode = AspectLockMode::Portrait;
+                    break;
+                case AspectLockMode::Portrait:
+                    m_AspectLockMode = AspectLockMode::NoLock;
+                    break;
+            }
             break;
 
         default:
@@ -306,8 +316,11 @@ bool Application::ConfirmExport() {
     const image::ImageOptimizationSettings optimization_settings = BuildImageOptimizationSettings();
 
     no::pdf::PdfExporter exporter(m_Config.Backend);
+    const auto preset = (m_AspectLockMode == AspectLockMode::Portrait)
+                            ? no::pdf::ExportPreset::InkPad4Portrait
+                            : no::pdf::ExportPreset::InkPad4Landscape;
     const bool export_success =
-        exporter.Export(m_Document, selection, output_pdf, no::pdf::ExportPreset::InkPad4Landscape, m_RotationDegrees,
+        exporter.Export(m_Document, selection, output_pdf, preset, m_RotationDegrees,
                         m_ExportDialogState.OptimizeForEInk, optimization_settings);
 
     m_Config.DefaultBook = m_ExportDialogState.Book;
@@ -490,7 +503,7 @@ void Application::PreviousPage() {
 }
 
 glm::vec2 Application::GetEffectiveSelectionPoint(const glm::vec2& world) const {
-    if (m_IsAspectLocked) {
+    if (m_AspectLockMode != AspectLockMode::NoLock) {
         return ApplyAspectLock(m_SelectionStartWorld, world, GetActiveExportAspectRatio());
     }
 
@@ -607,7 +620,9 @@ void Application::OnScroll(double /*xoffset*/, double yoffset, double mouse_x, d
 }
 
 float Application::GetActiveExportAspectRatio() const {
-    // TODO: fix it
+    if (m_AspectLockMode == AspectLockMode::Portrait) {
+        return 1404.0f / 1872.0f;
+    }
     return 1872.0f / 1404.0f;
 }
 

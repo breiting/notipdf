@@ -21,6 +21,12 @@
 
 namespace no::app {
 
+enum class AspectLockMode {
+    NoLock,
+    Landscape,
+    Portrait
+};
+
 /**
  * \brief Coordinates PDF loading, viewer state, rendering, and input handling.
  */
@@ -192,7 +198,13 @@ class Application {
 
     bool m_IsSelecting = false;
     bool m_IsMovingSelection = false;
-    bool m_IsAspectLocked = false;
+enum class AspectLockMode {
+    NoLock,
+    Landscape,
+    Portrait
+};
+
+    AspectLockMode m_AspectLockMode = AspectLockMode::NoLock;
     glm::vec2 m_SelectionStartWorld = glm::vec2(0.0f);
     glm::vec2 m_SelectionCurrentWorld = glm::vec2(0.0f);
 
