@@ -45,7 +45,7 @@ You need:
 Use Homebrew to install the required package(s).
 
 ```bash
-brew install mupdf
+brew install llvm cmake mupdf
 ```
 
 ### Linux
